@@ -73,7 +73,7 @@ export function MobileMenu({ open, onClose }) {
             {!catalog && <MenuSkeleton rows={4} />}
             {collections.map((c) => (
               <li key={c.slug}>
-                <Link to={`/shop?collection=${c.slug}`} className={subLinkClass}>
+                <Link to={`/collections/${c.slug}`} className={subLinkClass}>
                   {c.name}
                 </Link>
               </li>

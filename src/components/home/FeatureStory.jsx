@@ -26,7 +26,7 @@ export function FeatureStory() {
               bringing Kenyan pride into your everyday wardrobe.
             </p>
             <Link
-              to="/shop?collection=kenya"
+              to="/collections/kenya"
               className="btn btn-primary mt-8"
               onClick={() => track(EVENTS.collectionClicked, { collection: 'kenya', placement: 'home-feature' })}
             >

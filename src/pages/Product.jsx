@@ -12,7 +12,8 @@ import { site } from '../config/site'
 import { useHome, useProduct } from '../hooks/useCatalog'
 import { EVENTS, track } from '../lib/analytics'
 import { productPreview } from '../lib/catalog'
-import { absoluteUrl, useSeo } from '../lib/seo'
+import { ogImageSize } from '../lib/images'
+import { absoluteUrl, DEFAULT_IMAGE, useSeo } from '../lib/seo'
 
 const SCHEMA_AVAILABILITY = {
   'sold-out': 'https://schema.org/OutOfStock',
@@ -30,12 +31,13 @@ function productJsonLd(product, category) {
     sku: product.id,
     url,
     image: product.images.length
-      ? product.images.map((img) => absoluteUrl(imageSrc(img.id) || '/og-default.jpg'))
-      : [absoluteUrl('/og-default.jpg')],
+      ? product.images.map((img) => absoluteUrl(imageSrc(img.id) || DEFAULT_IMAGE))
+      : [absoluteUrl(DEFAULT_IMAGE)],
     brand: { '@type': 'Brand', name: site.brandName },
     category: category?.name,
   }
   if (product.material) data.material = product.material
+  if (product.colors?.length) data.color = product.colors.map((c) => c.name).join(', ')
   if (product.priceKES != null) {
     data.offers = {
       '@type': 'Offer',
@@ -64,13 +66,21 @@ export default function Product() {
   const product = data?.product
   const category = data?.category
 
+  const primaryImage = product?.images?.[0]
+  const ogSize = primaryImage ? ogImageSize(primaryImage.id, 1080) : null
+  // Real colour names from the product's own data, when it has any - never invented.
+  const colorNames = product?.colors?.length ? product.colors.map((c) => c.name).join(' and ') : null
+
   useSeo(
     product
       ? {
           title: product.name,
-          description: `${product.description.split('. ')[0]}. ${product.priceKES != null ? `KSh ${product.priceKES.toLocaleString('en-KE')}. ` : ''}Order on WhatsApp from ${site.brandName}, Nairobi.`,
+          description: `${product.description.split('. ')[0]}.${colorNames ? ` Available in ${colorNames}.` : ''} ${product.priceKES != null ? `KSh ${product.priceKES.toLocaleString('en-KE')}. ` : ''}Order on WhatsApp from ${site.brandName}, Nairobi.`,
           path: `/product/${product.slug}`,
-          image: imageSrc(product.images[0]?.id, 1080) || undefined,
+          image: imageSrc(primaryImage?.id, 1080) || undefined,
+          imageWidth: ogSize?.width,
+          imageHeight: ogSize?.height,
+          imageAlt: primaryImage?.alt || product.name,
           type: 'product',
           jsonLd: productJsonLd(product, category),
         }

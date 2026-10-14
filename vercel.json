@@ -9,6 +9,39 @@
       "destination": "https://snug-co-api.onrender.com/sitemap.xml"
     },
     {
+      "source": "/product/:slug",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(facebookexternalhit|facebot|twitterbot|whatsapp|linkedinbot|slackbot|telegrambot|discordbot|redditbot|pinterest|skypeuripreview|vkshare|w3c_validator).*"
+        }
+      ],
+      "destination": "https://snug-co-api.onrender.com/share/product/:slug"
+    },
+    {
+      "source": "/shop/:category",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(facebookexternalhit|facebot|twitterbot|whatsapp|linkedinbot|slackbot|telegrambot|discordbot|redditbot|pinterest|skypeuripreview|vkshare|w3c_validator).*"
+        }
+      ],
+      "destination": "https://snug-co-api.onrender.com/share/category/:category"
+    },
+    {
+      "source": "/collections/:collectionSlug",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(facebookexternalhit|facebot|twitterbot|whatsapp|linkedinbot|slackbot|telegrambot|discordbot|redditbot|pinterest|skypeuripreview|vkshare|w3c_validator).*"
+        }
+      ],
+      "destination": "https://snug-co-api.onrender.com/share/collection/:collectionSlug"
+    },
+    {
       "source": "/((?!api/|images/|assets/|.*\\..*).*)",
       "destination": "/index.html"
     }
