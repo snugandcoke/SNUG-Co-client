@@ -6,11 +6,21 @@ import { Spinner, ToastProvider } from './ui'
 
 export function useNoIndex() {
   useEffect(() => {
-    const meta = document.createElement('meta')
-    meta.name = 'robots'
+    // index.html already ships a robots meta tag (content: index,follow) for the storefront.
+    // Reuse it instead of appending a second one, which would leave two conflicting tags in the
+    // document while any admin page is open.
+    let meta = document.head.querySelector('meta[name="robots"]')
+    const previousContent = meta?.content
+    if (!meta) {
+      meta = document.createElement('meta')
+      meta.name = 'robots'
+      document.head.appendChild(meta)
+    }
     meta.content = 'noindex, nofollow'
-    document.head.appendChild(meta)
-    return () => meta.remove()
+    return () => {
+      if (previousContent === undefined) meta.remove()
+      else meta.content = previousContent
+    }
   }, [])
 }
 

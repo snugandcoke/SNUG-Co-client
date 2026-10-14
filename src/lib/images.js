@@ -56,3 +56,13 @@ export function imageSrc(id, width) {
   if (!image.widths) return image.url(Math.min(width || 1200, image.width || 1200))
   return image.url(width && image.widths.includes(width) ? width : image.widths.at(-1))
 }
+
+/** Width/height an og:image tag can claim for this photo at up to `maxWidth`, or null without
+ * one. Crawlers (WhatsApp, Facebook, ...) use these to lay out the preview before downloading
+ * the image, so they must match what imageSrc() actually serves, not be guessed. */
+export function ogImageSize(id, maxWidth = 1200) {
+  const image = getImage(id)
+  if (!image?.width || !image?.height) return null
+  const width = Math.min(maxWidth, image.width)
+  return { width, height: Math.round((width * image.height) / image.width) }
+}

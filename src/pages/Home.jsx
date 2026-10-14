@@ -10,11 +10,11 @@ import { SocialGallery } from '../components/SocialGallery'
 import { CatalogError } from '../components/States'
 import { StoreLocation } from '../components/StoreLocation'
 import { useHome } from '../hooks/useCatalog'
-import { storeJsonLd, useSeo } from '../lib/seo'
+import { storeJsonLd, useSeo, websiteJsonLd } from '../lib/seo'
 
 export default function Home() {
   const { status, data, retry } = useHome()
-  useSeo({ path: '/', jsonLd: storeJsonLd() })
+  useSeo({ path: '/', jsonLd: [storeJsonLd(), websiteJsonLd()] })
 
   const newArrivals = data?.newArrivals ?? []
 

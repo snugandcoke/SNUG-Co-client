@@ -121,7 +121,7 @@ export function Component() {
           <Field label="Text" error={errors.announcementText} hint="Shown in the strip at the top of every page. Leave empty to hide it.">
             {(field) => <input {...field} type="text" maxLength={200} value={form.announcementText} onChange={(e) => set('announcementText', e.target.value)} className={inputClass} />}
           </Field>
-          <Field label="Link" error={errors.announcementHref} hint="Where the announcement points, e.g. /shop?collection=kenya. Leave empty for plain text.">
+          <Field label="Link" error={errors.announcementHref} hint="Where the announcement points, e.g. /collections/kenya. Leave empty for plain text.">
             {(field) => <input {...field} type="text" value={form.announcementHref} onChange={(e) => set('announcementHref', e.target.value)} className={inputClass} />}
           </Field>
         </section>

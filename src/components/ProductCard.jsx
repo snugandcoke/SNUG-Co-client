@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { Link } from 'react-router-dom'
 import { AVAILABILITY_LABEL, BADGE_LABEL, formatPrice } from '../lib/format'
 import { Img } from './Img'
@@ -12,7 +13,7 @@ function badgeFor(product) {
   return product.badge ? BADGE_LABEL[product.badge] : null
 }
 
-export function ProductCard({ product, sizes = CARD_SIZES, priority = false, eager = false }) {
+export const ProductCard = memo(function ProductCard({ product, sizes = CARD_SIZES, priority = false, eager = false }) {
   const [primary, secondary] = product.images
   const secondaryImage = getImage(secondary?.id)
   const badge = badgeFor(product)
@@ -72,7 +73,7 @@ export function ProductCard({ product, sizes = CARD_SIZES, priority = false, eag
       />
     </article>
   )
-}
+})
 
 export function ProductCardSkeleton() {
   return (

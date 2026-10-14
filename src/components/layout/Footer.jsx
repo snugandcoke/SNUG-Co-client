@@ -4,6 +4,16 @@ import { DirectionsLink, InstagramLink, WhatsAppLink } from '../ContactLinks'
 import { ThemeToggle } from '../ThemeToggle'
 import { Wordmark } from '../Wordmark'
 
+// Every page links to each category by name, so Google can discover and crawl them from
+// anywhere on the site, not just the homepage tiles. Matches server/seed/catalog.json's
+// categories; update here too if a category is ever added, renamed or removed.
+const SHOP_CATEGORIES = [
+  { to: '/shop/lounge-sets', label: 'Lounge sets' },
+  { to: '/shop/tracksuits', label: 'Tracksuits' },
+  { to: '/shop/jackets', label: 'Jackets' },
+  { to: '/shop/sweatshirts', label: 'Sweatshirts & tops' },
+]
+
 export function Footer() {
   const year = new Date().getFullYear()
   const heading = 'text-sm text-on-bar/60'
@@ -35,11 +45,13 @@ export function Footer() {
                   Shop all
                 </Link>
               </li>
-              <li>
-                <Link to="/#collections" className={link}>
-                  Collections
-                </Link>
-              </li>
+              {SHOP_CATEGORIES.map((c) => (
+                <li key={c.to}>
+                  <Link to={c.to} className={link}>
+                    {c.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
           <div>

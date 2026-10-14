@@ -71,6 +71,7 @@ const router = createBrowserRouter([
       { path: '/', element: <Home /> },
       { path: '/shop', element: deferred(<Shop />, shopFallback) },
       { path: '/shop/:category', element: deferred(<Shop />, shopFallback) },
+      { path: '/collections/:collectionSlug', element: deferred(<Shop />, shopFallback) },
       { path: '/product/:slug', element: deferred(<Product />, <ProductFallback />) },
       { path: '/about', element: deferred(<About />) },
       { path: '/contact', element: deferred(<Contact />) },
