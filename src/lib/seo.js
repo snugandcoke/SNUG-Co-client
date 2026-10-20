@@ -49,7 +49,7 @@ function setJsonLd(data) {
 export const DEFAULT_IMAGE = '/og-default.jpg'
 const DEFAULT_IMAGE_SIZE = { width: 1200, height: 630 }
 
-export function useSeo({ title, description, path, image, imageWidth, imageHeight, imageAlt, type = 'website', jsonLd }) {
+export function useSeo({ title, description, path, image, imageWidth, imageHeight, imageAlt, type = 'website', jsonLd, noindex = false }) {
   const fullTitle = title ? `${title} | ${site.brandName}` : `${site.brandName} | ${site.seoTitle}`
   const desc = description || site.seoDescription
   const jsonLdKey = jsonLd ? JSON.stringify(jsonLd) : ''
@@ -63,6 +63,8 @@ export function useSeo({ title, description, path, image, imageWidth, imageHeigh
     const img = absoluteUrl(image || DEFAULT_IMAGE)
     document.title = fullTitle
     setMeta('name', 'description', desc)
+    // index.html says index,follow; private and missing pages override it, and public pages restore it.
+    setMeta('name', 'robots', noindex ? 'noindex,follow' : 'index,follow')
     setCanonical(url)
     setMeta('property', 'og:title', fullTitle)
     setMeta('property', 'og:description', desc)
@@ -77,7 +79,7 @@ export function useSeo({ title, description, path, image, imageWidth, imageHeigh
     setMeta('name', 'twitter:description', desc)
     setMeta('name', 'twitter:image', img)
     setJsonLd(jsonLdKey ? JSON.parse(jsonLdKey) : null)
-  }, [fullTitle, desc, path, image, size?.width, size?.height, alt, type, jsonLdKey])
+  }, [fullTitle, desc, path, image, size?.width, size?.height, alt, type, jsonLdKey, noindex])
 }
 
 export function storeJsonLd() {

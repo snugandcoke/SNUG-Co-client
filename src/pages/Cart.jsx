@@ -136,7 +136,7 @@ function ChooseAgain({ line, product, onSave }) {
 }
 
 export default function Cart() {
-  useSeo({ title: 'Your bag', path: '/cart' })
+  useSeo({ title: 'Your bag', path: '/cart', noindex: true })
   const { catalog } = useListing()
   const shopper = useShopper({ force: true })
   const [busy, setBusy] = useState(false)
