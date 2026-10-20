@@ -4,10 +4,13 @@ import App from './App'
 import './styles/index.css'
 import { reloadOnce } from './lib/reload'
 import { settingsReady } from './lib/settings'
+import { startShopperSync } from './lib/shopper'
 
 window.addEventListener('vite:preloadError', (event) => {
   if (reloadOnce()) event.preventDefault()
 })
+
+startShopperSync()
 
 const render = () =>
   createRoot(document.getElementById('root')).render(

@@ -58,6 +58,8 @@ Use `/admin`. `src/data/products.js` is the fallback catalog used only when `VIT
 
 ## Deploying
 
+> **Warning:** the `render.yaml` in the project folder above both repositories is a legacy file. It is not the current deployment definition and must not be applied. See the server README, "Legacy `render.yaml`". Production settings for the Vercel project (production branch, environment variable names) must be verified in the Vercel dashboard; they are not recorded here.
+
 Two ways to host this, depending on where the Flask API (`../server`) runs:
 
 - **Vercel (production):** set `VITE_API_URL=/api`. `vercel.json` proxies `/api/*` to `https://snug-co-api.onrender.com/api/*` and falls back to `index.html` for page routes, so the browser only talks to the site's own domain and admin cookies stay same-site. Product photos load straight from Cloudinary.

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { CloseIcon, FilterIcon } from '../components/Icons'
+import { imageSrc } from '../components/Img'
 import { ProductGrid, ProductGridSkeleton } from '../components/ProductGrid'
 import { FilterDrawer } from '../components/shop/FilterDrawer'
 import { ShopToolbarSkeleton } from '../components/shop/ShopSkeleton'
@@ -8,27 +9,37 @@ import { CatalogError, EmptyState } from '../components/States'
 import { useListing } from '../hooks/useCatalog'
 import { EVENTS, track } from '../lib/analytics'
 import { filterProducts, searchProducts, sortProducts, SORT_OPTIONS } from '../lib/catalog'
-import { useSeo } from '../lib/seo'
+import { shopCanonicalPath } from '../lib/shopRouting'
+import { CATEGORY_SEO, COLLECTION_SEO, SHOP_SEO } from '../data/seoCopy'
+import { ogImageSize } from '../lib/images'
+import { absoluteUrl, useSeo } from '../lib/seo'
 import NotFound from './NotFound'
 
 const DEFAULT_SORT = 'featured'
 
 export default function Shop() {
-  const { category: categoryParam } = useParams()
+  // /shop/:category and /collections/:collectionSlug are separate route patterns (App.jsx), so
+  // only one of these two params is ever set by the router for a given visit.
+  const { category: categoryParam, collectionSlug: collectionPathParam } = useParams()
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
   const { status, catalog, retry } = useListing()
   const [filtersOpen, setFiltersOpen] = useState(false)
   const closeFilters = useCallback(() => setFiltersOpen(false), [])
 
-  const collectionSlug = searchParams.get('collection')
+  // A collection filter reaches this page two ways: the dedicated /collections/:slug URL, or the
+  // ?collection= query param stacked onto /shop or /shop/:category (e.g. a category filtered to
+  // one collection). Both resolve to the same `collection`; only the dedicated URL is canonical.
+  const collectionQueryParam = searchParams.get('collection')
+  const collectionParam = collectionPathParam || collectionQueryParam
   const query = searchParams.get('q')?.trim() || ''
   const sort = SORT_OPTIONS.some((s) => s.value === searchParams.get('sort')) ? searchParams.get('sort') : DEFAULT_SORT
   const newOnly = categoryParam === 'new'
 
   const category = catalog?.categories.find((c) => c.slug === categoryParam)
-  const collection = catalog?.collections.find((c) => c.slug === collectionSlug)
+  const collection = catalog?.collections.find((c) => c.slug === collectionParam)
   const unknownCategory = catalog && categoryParam && !newOnly && !category
+  const unknownCollection = catalog && collectionPathParam && !collection
 
   const products = useMemo(() => {
     if (!catalog) return []
@@ -56,10 +67,35 @@ export default function Shop() {
       ? 'The latest pieces from the Snug & Co. studio.'
       : category?.description || collection?.description || 'Lounge sets, tracksuits, jackets and matchday pieces. Order any piece on WhatsApp.'
 
+  const ogSource = category || collection
+  const ogSize = ogSource ? ogImageSize(ogSource.image, 1080) : null
+  // Keyword-targeted title/description for search engines, kept separate from the visible H1
+  // and intro paragraph above so the page itself isn't rewritten - see client/src/data/seoCopy.js.
+  const seoCopy = category ? CATEGORY_SEO[category.slug] : collection ? COLLECTION_SEO[collection.slug] : null
+  const onBareShop = !query && !newOnly && !category && !collection
+  // The one canonical URL for this page's content. A collection is always canonicalized to its
+  // dedicated /collections/:slug URL, whether it was reached that way or via ?collection= (on
+  // /shop or /shop/:category) - so the query-param and path forms never compete as duplicates.
+  const path = shopCanonicalPath({ categoryParam, collectionSlug: collection?.slug })
+  // Shop > [category or collection], for pages that have a real place in the taxonomy.
+  const breadcrumbJsonLd = ogSource && {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Shop', item: absoluteUrl('/shop') },
+      { '@type': 'ListItem', position: 2, name: ogSource.name, item: absoluteUrl(path) },
+    ],
+  }
+
   useSeo({
-    title: query ? `Search: ${query}` : title === 'Shop Snug' ? 'Shop' : title,
-    description: intro || undefined,
-    path: categoryParam ? `/shop/${categoryParam}` : '/shop',
+    title: query ? `Search: ${query}` : seoCopy?.title || (onBareShop ? SHOP_SEO.title : title === 'Shop Snug' ? 'Shop' : title),
+    description: seoCopy?.description || (onBareShop ? SHOP_SEO.description : intro || undefined),
+    path,
+    image: imageSrc(ogSource?.image, 1080) || undefined,
+    imageWidth: ogSize?.width,
+    imageHeight: ogSize?.height,
+    jsonLd: breadcrumbJsonLd || undefined,
+    imageAlt: ogSource?.name,
   })
 
   useEffect(() => {
@@ -95,7 +131,7 @@ export default function Shop() {
     setSearchParams(params, { replace: true, preventScrollReset: true })
   }
 
-  if (unknownCategory) return <NotFound />
+  if (unknownCategory || unknownCollection) return <NotFound />
 
   const current = { category: newOnly ? 'new' : category?.slug ?? null, collection: collection?.slug ?? null, sort }
   const chipCategories = catalog ? [{ slug: null, name: 'All' }, { slug: 'new', name: 'New' }, ...catalog.categories] : []

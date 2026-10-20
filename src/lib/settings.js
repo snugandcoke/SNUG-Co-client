@@ -1,5 +1,6 @@
 import { useEffect, useSyncExternalStore } from 'react'
 import { site } from '../config/site'
+import { fetchText } from './http'
 import { registerImages } from './images'
 
 const API_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
@@ -44,10 +45,11 @@ function publish(data) {
 }
 
 async function fetchSettings() {
-  // A plain request, so the browser can reuse the copy index.html preloaded.
-  const res = await fetch(`${API_URL}/settings`)
+  // A plain request, so the browser can reuse the copy index.html preloaded. A read, so it may try
+  // again once; a timeout falls back to what this browser saw last (see loadSettings).
+  const { res, body } = await fetchText(`${API_URL}/settings`, { retries: 1 })
   if (!res.ok) throw new Error(`Settings request failed (${res.status})`)
-  const data = await res.json()
+  const data = JSON.parse(body)
   registerImages(data.images)
   try {
     localStorage.setItem(STORED, JSON.stringify(data))

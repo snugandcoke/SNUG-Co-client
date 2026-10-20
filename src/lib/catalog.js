@@ -1,3 +1,4 @@
+import { fetchText } from './http'
 import { registerImages } from './images'
 
 const API_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
@@ -138,11 +139,12 @@ function entryFor(key) {
   return entry
 }
 
+// A read, so it may try again once. A request that times out leaves the copy on screen (see load).
 async function fetchBody(path) {
-  const res = await fetch(`${API_URL}${path}`)
+  const { res, body } = await fetchText(`${API_URL}${path}`, { retries: 1 })
   if (res.status === 404) throw new NotFoundError('Not found')
   if (!res.ok) throw new Error(`Request failed (${res.status})`)
-  return res.text()
+  return body
 }
 
 /** Fetch fresh data once per visit. A copy already on screen stays there if the network fails. */
@@ -189,11 +191,12 @@ export function forget(key) {
   store.delete(key)
 }
 
-const CHECKED_FIELDS = ['name', 'priceKES', 'availability', 'madeToOrder']
+// The choices too: a colour or size an admin removed must not stay on a page that offers it.
+const CHECKED_FIELDS = ['name', 'priceKES', 'availability', 'madeToOrder', 'colors', 'sizes', 'sizesNote', 'options']
 
 /**
- * Put the server's current name, price and availability (from checkOrder) into every page that
- * shows the piece. `fresh` null means the piece is gone: its own page then says so, and lists
+ * Put the server's current name, price, availability and choices (from checkOrder) into every page
+ * that shows the piece. `fresh` null means the piece is gone: its own page then says so, and lists
  * drop it.
  */
 export function applyOrderCheck(id, fresh) {

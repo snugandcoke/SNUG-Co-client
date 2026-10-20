@@ -2,14 +2,14 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { WhatsAppIcon } from '../components/Icons'
 import { Img } from '../components/Img'
-import { QuantitySelector } from '../components/product/VariantSelector'
+import { ChoiceGroup, QuantitySelector, TextOption } from '../components/product/VariantSelector'
 import { EmptyState, ShopperUnavailable } from '../components/States'
 import { useListing } from '../hooks/useCatalog'
 import { EVENTS, track } from '../lib/analytics'
 import { formatPrice } from '../lib/format'
 import { describeChange, linesChanged, orderChanges, UNORDERABLE } from '../lib/order'
 import { absoluteUrl, useSeo } from '../lib/seo'
-import { cartCount, clearCart, loadShopper, refreshShopper, removeFromCart, setCartQuantity, useShopper } from '../lib/shopper'
+import { cartCount, clearCart, loadShopper, refreshForCheckout, removeFromCart, setCartQuantity, updateCart, useShopper } from '../lib/shopper'
 import { cartMessage, openWhatsApp, whatsappLink } from '../lib/whatsapp'
 
 function choicesText(line) {
@@ -32,8 +32,111 @@ function bagItems(cart, products, listed) {
 
 const isOrderable = (i) => !UNORDERABLE.has(i.product.availability)
 
+// Choices the server says no longer fit the piece: { field: message }, empty when they do.
+const hasIssues = (line) => Object.keys(line.issues ?? {}).length > 0
+
+// Shown on a bag line whose colour, size or option the piece no longer offers. The customer picks
+// again here, and the server checks the new choices before saving them.
+function ChooseAgain({ line, product, onSave }) {
+  const [color, setColor] = useState(line.color ?? null)
+  const [size, setSize] = useState(line.size ?? null)
+  const [options, setOptions] = useState(line.options ?? {})
+  // The issues are listed above; field errors appear here only when a save is refused.
+  const [errors, setErrors] = useState({})
+  const [saving, setSaving] = useState(false)
+  const [failure, setFailure] = useState(null)
+
+  const clear = (field) => setErrors((e) => ({ ...e, [field]: undefined }))
+  const setOption = (name, value) => {
+    setOptions((o) => ({ ...o, [name]: value }))
+    clear(`option:${name}`)
+  }
+
+  const save = async () => {
+    setSaving(true)
+    setFailure(null)
+    try {
+      await onSave({ color, size, options })
+    } catch (err) {
+      setErrors(err.fields ?? {})
+      setFailure(err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="border-l-2 border-alert pl-4">
+      <ul className="space-y-1 text-sm font-medium text-alert">
+        {Object.values(line.issues).map((message) => (
+          <li key={message}>{message}</li>
+        ))}
+      </ul>
+      <div className="mt-4 space-y-5">
+        {product.colors?.length > 0 && (
+          <ChoiceGroup
+            label="Colour"
+            name={`bag-${line.key}-colour`}
+            values={product.colors.map((c) => c.name)}
+            swatches={Object.fromEntries(product.colors.map((c) => [c.name, c.swatch]))}
+            value={color}
+            onChange={(v) => {
+              setColor(v)
+              clear('color')
+            }}
+            error={errors.color}
+          />
+        )}
+        {product.sizes?.length > 0 && (
+          <ChoiceGroup
+            label="Size"
+            name={`bag-${line.key}-size`}
+            values={product.sizes}
+            value={size}
+            onChange={(v) => {
+              setSize(v)
+              clear('size')
+            }}
+            error={errors.size}
+          />
+        )}
+        {(product.options ?? []).map((option) =>
+          option.type === 'text' ? (
+            <TextOption
+              key={option.name}
+              label={option.name}
+              placeholder={option.placeholder}
+              value={options[option.name] ?? ''}
+              onChange={(v) => setOption(option.name, v)}
+              error={errors[`option:${option.name}`]}
+            />
+          ) : (
+            <ChoiceGroup
+              key={option.name}
+              label={option.name}
+              name={`bag-${line.key}-${option.name}`}
+              values={option.values}
+              value={options[option.name] ?? null}
+              onChange={(v) => setOption(option.name, v)}
+              error={errors[`option:${option.name}`]}
+            />
+          ),
+        )}
+      </div>
+      <button type="button" className="btn btn-secondary mt-5 min-h-12" disabled={saving} onClick={save}>
+        {saving ? 'Saving…' : 'Save choices'}
+      </button>
+      {failure && (
+        <p role="alert" className="mt-3 text-sm font-medium text-alert">
+          {failure}
+        </p>
+      )}
+    </div>
+  )
+}
+
 export default function Cart() {
-  useSeo({ title: 'Your bag', path: '/cart' })
+  useSeo({ title: 'Your bag', path: '/cart', noindex: true })
   const { catalog } = useListing()
   const shopper = useShopper({ force: true })
   const [busy, setBusy] = useState(false)
@@ -72,15 +175,21 @@ export default function Cart() {
       const shownItems = items.map((i) => i.product)
       try {
         const opened = await openWhatsApp(async () => {
-          const fresh = await refreshShopper()
+          const fresh = await refreshForCheckout()
           // No current prices in the reply (an older server): don't send anything unchecked.
           if (!fresh.products) throw new Error('We couldn’t confirm your order. Try again in a moment.')
           const found = orderChanges(shownItems, fresh.products)
-          if (found.length || linesChanged(shownLines, fresh.cart)) {
-            setChanges(found.length ? found.map(describeChange) : ['Your bag was changed in another window.'])
+          const ordered = bagItems(fresh.cart, fresh.products, listed).filter(isOrderable)
+          // A choice the piece no longer offers stops the whole order, so the customer sees the bag again.
+          const choiceNotes = ordered
+            .filter(({ line }) => hasIssues(line))
+            .map(({ product, line }) => `${product.name}: ${Object.values(line.issues).join(' ')}`)
+          const notes = [...found.map(describeChange), ...choiceNotes]
+          if (linesChanged(shownLines, fresh.cart) && !notes.length) notes.push('Your bag was changed in another window.')
+          if (notes.length) {
+            setChanges(notes)
             return null
           }
-          const ordered = bagItems(fresh.cart, fresh.products, listed).filter(isOrderable)
           if (!ordered.length) return null
           return whatsappLink(
             cartMessage(ordered.map(({ product, line }) => ({ product, line, url: absoluteUrl(`/product/${product.slug}`) }))),
@@ -149,6 +258,13 @@ export default function Cart() {
                       {choicesText(line) && <p className="text-sm text-stone">{choicesText(line)}</p>}
                       {unavailable ? (
                         <p className="text-sm font-medium text-alert">No longer available to order. It won’t be included.</p>
+                      ) : hasIssues(line) ? (
+                        <ChooseAgain
+                          key={JSON.stringify(line.issues)}
+                          line={line}
+                          product={product}
+                          onSave={(choices) => updateCart(line.key, choices).then(() => setChanges([]))}
+                        />
                       ) : (
                         <QuantitySelector
                           value={line.quantity}

@@ -61,8 +61,20 @@ export function OrderPanel({ product }) {
     return !first
   }
 
+  // Clears the choices the server says no longer fit the piece, and shows why beside each one.
+  // The customer chooses again; the other choices stay.
+  function clearChangedChoices(issues) {
+    setErrors(issues)
+    if ('color' in issues) setColor(null)
+    if ('size' in issues) setSize(null)
+    const names = Object.keys(issues)
+      .filter((key) => key.startsWith('option:'))
+      .map((key) => key.slice('option:'.length))
+    if (names.length) setOptions((o) => Object.fromEntries(Object.entries(o).filter(([name]) => !names.includes(name))))
+  }
+
   // The page's price may come from this browser's copy or the CDN, so the server is asked for the
-  // current price and availability right before WhatsApp opens. If either changed, nothing is
+  // current price, availability and choices right before WhatsApp opens. If any changed, nothing is
   // sent: the page shows the new details and says what changed.
   async function handleOrder(placement) {
     if (checking || !validate()) return
@@ -72,12 +84,18 @@ export function OrderPanel({ product }) {
     try {
       const opened = await openWhatsApp(async () => {
         if (!shopperEnabled) return link(product) // no API (local preview): nothing to check against
-        const fresh = (await checkOrder([product.id]))[product.id]
+        const { products, items } = await checkOrder([{ productId: product.id, color, size, options, quantity }])
+        const fresh = products[product.id] ?? null
+        const issues = items[0]?.issues ?? {}
+        const choiceProblem = Object.keys(issues).length > 0
         const changes = orderChanges([product], fresh ? { [product.id]: fresh } : {})
-        if (changes.length) {
-          const next = changes.every((c) => c.type === 'price') ? ' Check the details, then tap Order again.' : ''
-          setOrderNote(`${changes.map(describeChange).join(' ')}${next}`)
-          applyOrderCheck(product.id, fresh ?? null)
+        if (changes.length || choiceProblem) {
+          const notes = changes.map(describeChange)
+          if (choiceProblem) notes.push('One of your choices is no longer available. Choose again, then tap Order.')
+          const hint = !choiceProblem && changes.every((c) => c.type === 'price') ? ' Check the details, then tap Order again.' : ''
+          setOrderNote(`${notes.join(' ')}${hint}`)
+          applyOrderCheck(product.id, fresh)
+          if (choiceProblem) clearChangedChoices(issues)
           return null
         }
         return link({ ...product, ...fresh })

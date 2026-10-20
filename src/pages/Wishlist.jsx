@@ -6,7 +6,7 @@ import { useSeo } from '../lib/seo'
 import { loadShopper, useShopper } from '../lib/shopper'
 
 export default function Wishlist() {
-  useSeo({ title: 'Wishlist', path: '/wishlist' })
+  useSeo({ title: 'Wishlist', path: '/wishlist', noindex: true })
   const { status, catalog, retry } = useListing()
   const shopper = useShopper({ force: true })
 

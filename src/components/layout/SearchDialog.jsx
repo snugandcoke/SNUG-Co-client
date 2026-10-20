@@ -147,7 +147,7 @@ function Suggestions({ catalog }) {
           </Link>
         ))}
         {catalog.collections.map((c) => (
-          <Link key={c.slug} to={`/shop?collection=${c.slug}`} className="chip">
+          <Link key={c.slug} to={`/collections/${c.slug}`} className="chip">
             {c.name}
           </Link>
         ))}

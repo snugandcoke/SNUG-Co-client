@@ -1,4 +1,5 @@
-import { lazy, Suspense } from 'react'
+import { Analytics } from '@vercel/analytics/react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { createBrowserRouter, RouterProvider, useParams } from 'react-router-dom'
 import { Layout } from './components/layout/Layout'
 import { ProductSkeleton } from './components/product/ProductSkeleton'
@@ -70,6 +71,7 @@ const router = createBrowserRouter([
       { path: '/', element: <Home /> },
       { path: '/shop', element: deferred(<Shop />, shopFallback) },
       { path: '/shop/:category', element: deferred(<Shop />, shopFallback) },
+      { path: '/collections/:collectionSlug', element: deferred(<Shop />, shopFallback) },
       { path: '/product/:slug', element: deferred(<Product />, <ProductFallback />) },
       { path: '/about', element: deferred(<About />) },
       { path: '/contact', element: deferred(<Contact />) },
@@ -82,6 +84,32 @@ const router = createBrowserRouter([
   },
 ])
 
+// Vercel Analytics counts the first load on its own. Client-side navigation doesn't reload the
+// page, so each change of route is reported here (route is the matched pattern, path the URL).
+const pageOf = (state) => ({
+  path: state.location.pathname,
+  route: state.matches.at(-1)?.route.path ?? state.location.pathname,
+})
+
 export default function App() {
-  return <RouterProvider router={router} />
+  const [page, setPage] = useState(() => pageOf(router.state))
+
+  // Keep the same object when nothing changed, so App doesn't re-render on every router update.
+  useEffect(
+    () =>
+      router.subscribe((state) =>
+        setPage((prev) => {
+          const next = pageOf(state)
+          return next.path === prev.path && next.route === prev.route ? prev : next
+        }),
+      ),
+    [],
+  )
+
+  return (
+    <>
+      <RouterProvider router={router} />
+      <Analytics route={page.route} path={page.path} />
+    </>
+  )
 }

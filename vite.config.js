@@ -36,13 +36,15 @@ function siteFiles(siteUrl) {
     name: 'snug-site-files',
     transformIndexHtml(html) {
       if (known) {
-        html = html.replace('property="og:image" content="/og-default.jpg"', `property="og:image" content="${siteUrl}/og-default.jpg"`)
+        html = html
+          .replace('property="og:image" content="/og-default.jpg"', `property="og:image" content="${siteUrl}/og-default.jpg"`)
+          .replace('name="twitter:image" content="/og-default.jpg"', `name="twitter:image" content="${siteUrl}/og-default.jpg"`)
       }
       // An empty verification tag does nothing; leave it out until Search Console gives a value.
       return html.replace(/\n\s*<meta name="google-site-verification" content="\s*" \/>/, '')
     },
     generateBundle() {
-      const lines = ['User-agent: *', 'Allow: /', 'Disallow: /admin', 'Disallow: /api', 'Disallow: /cart', 'Disallow: /wishlist']
+      const lines = ['User-agent: *', 'Allow: /', 'Disallow: /admin', 'Disallow: /api', 'Disallow: /share', 'Disallow: /cart', 'Disallow: /wishlist']
       if (known) lines.push('', `Sitemap: ${siteUrl}/sitemap.xml`)
       this.emitFile({ type: 'asset', fileName: 'robots.txt', source: `${lines.join('\n')}\n` })
     },

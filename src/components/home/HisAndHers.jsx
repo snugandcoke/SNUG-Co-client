@@ -25,7 +25,7 @@ export function HisAndHers({ pieces }) {
               Style has no gender, and neither does comfort. Matching sets for him, for her, or for both of you.
             </p>
             <Link
-              to="/shop?collection=his-and-hers"
+              to="/collections/his-and-hers"
               className="btn btn-primary mt-7"
               onClick={() => track(EVENTS.collectionClicked, { collection: 'his-and-hers', placement: 'home' })}
             >

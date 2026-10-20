@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { useSeo } from '../lib/seo'
 
 export default function NotFound() {
-  useSeo({ title: 'Page not found' })
+  useSeo({ title: 'Page not found', noindex: true })
 
   return (
     <div className="shell pb-28 pt-16 lg:pt-24">

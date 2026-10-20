@@ -16,9 +16,9 @@ export const site = {
   shortName: 'Snug & Co',
   tagline: 'Minimal, Luxurious & Effortlessly you.',
   statement: 'Where comfort meets elevated living.',
-  seoTitle: 'Loungewear, Tracksuits & Matchday Wear in Nairobi, Kenya',
+  seoTitle: 'Tracksuits, Hoodies & Streetwear in Kenya',
   seoDescription:
-    'Shop Snug & Co., a Nairobi clothing brand: lounge sets, tracksuits, hoodies, jackets and matchday wear. Comfortable, minimal fashion in Kenya. Order on WhatsApp.',
+    'Discover stylish tracksuits, hoodies, jackets and streetwear essentials at Snug & Co. Shop our collections in Nairobi, Kenya.',
   bio: 'Where comfort meets elevated living. Our carefully curated pieces wrap you in softness and warmth.',
   established: 2023,
   values: ['Effortless comfort', 'Timeless style', 'Made with intention'],

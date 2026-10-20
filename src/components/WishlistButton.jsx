@@ -21,12 +21,14 @@ export function WishlistButton({ product, className = '', iconClassName, label =
     }
   }
 
+  // The icon-only button is a toggle: its name stays the same and aria-pressed says whether it's saved.
+  // The labelled one names its state in its visible text instead.
   return (
     <button
       type="button"
       onClick={toggle}
       aria-pressed={label ? undefined : saved}
-      aria-label={label ? undefined : `Save ${product.name} to your wishlist`}
+      aria-label={label ? undefined : `Save ${product.name} to wishlist`}
       title={saved ? 'Saved to your wishlist' : 'Save to wishlist'}
       className={className}
     >
