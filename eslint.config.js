@@ -11,7 +11,7 @@ export default [
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
-      globals: globals.browser,
+      globals: { ...globals.browser, __VERCEL_ANALYTICS__: 'readonly' },
       parserOptions: {
         ecmaFeatures: { jsx: true },
       },

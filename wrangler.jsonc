@@ -1,8 +1,23 @@
 {
-  "name": "snug-and-co",
+  // Must match the deployed Worker (snug-co-client.snugandco-ke.workers.dev); a different name deploys a second,
+  // separate Worker and leaves the live one untouched.
+  "name": "snug-co-client",
+  "main": "worker/index.js",
   "compatibility_date": "2026-10-01",
+  "vars": {
+    // The Render API this site proxies /api, /uploads, /share and /sitemap.xml to.
+    "API_ORIGIN": "https://snug-co-server.onrender.com"
+  },
+  "observability": {
+    "enabled": false
+  },
   "assets": {
     "directory": "./dist",
-    "not_found_handling": "single-page-application"
+    "binding": "ASSETS",
+    // Page routes fall back to index.html here, so no public/_redirects catch-all is needed
+    // (it fails the deploy with error 100324).
+    "not_found_handling": "single-page-application",
+    // Only these paths run the Worker first; everything else is served straight from the assets.
+    "run_worker_first": ["/api/*", "/uploads/*", "/share/*", "/sitemap.xml", "/product/*", "/shop/*", "/collections/*"]
   }
 }

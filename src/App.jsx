@@ -109,7 +109,8 @@ export default function App() {
   return (
     <>
       <RouterProvider router={router} />
-      <Analytics route={page.route} path={page.path} />
+      {/* /_vercel/insights/script.js exists only on Vercel; elsewhere it falls back to index.html. */}
+      {__VERCEL_ANALYTICS__ && <Analytics route={page.route} path={page.path} />}
     </>
   )
 }
