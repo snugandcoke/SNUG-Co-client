@@ -1,4 +1,6 @@
 import { createHash } from 'node:crypto'
+import { readdirSync, rmSync } from 'node:fs'
+import { join, resolve, sep } from 'node:path'
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
@@ -47,6 +49,26 @@ function siteFiles(siteUrl) {
       const lines = ['User-agent: *', 'Allow: /', 'Disallow: /admin', 'Disallow: /api', 'Disallow: /share', 'Disallow: /cart', 'Disallow: /wishlist']
       if (known) lines.push('', `Sitemap: ${siteUrl}/sitemap.xml`)
       this.emitFile({ type: 'asset', fileName: 'robots.txt', source: `${lines.join('\n')}\n` })
+    },
+  }
+}
+
+// Vite copies public/ as is, dotfiles included. Keep editor, OS and notes files out of the
+// deployed site: they'd be served publicly by Cloudflare or Vercel.
+const NOT_FOR_DEPLOY = /(^|\/)(\.DS_Store|\.claude|\.cc-writes|[^/]+\.md)$/
+
+function dropStrayFiles() {
+  let outDir
+  return {
+    name: 'snug-drop-stray-files',
+    apply: 'build',
+    configResolved(config) {
+      outDir = resolve(config.root, config.build.outDir)
+    },
+    closeBundle() {
+      for (const entry of readdirSync(outDir, { recursive: true })) {
+        if (NOT_FOR_DEPLOY.test(entry.split(sep).join('/'))) rmSync(join(outDir, entry), { recursive: true, force: true })
+      }
     },
   }
 }
@@ -100,7 +122,9 @@ export default defineConfig(({ command, mode }) => {
   }
 
   return {
-    plugins: [react(), tailwindcss(), siteFiles(siteUrl), contentSecurityPolicy(env)],
+    // Vercel sets VERCEL during its builds. Its analytics script is served by Vercel only.
+    define: { __VERCEL_ANALYTICS__: JSON.stringify(Boolean(process.env.VERCEL)) },
+    plugins: [react(), tailwindcss(), siteFiles(siteUrl), contentSecurityPolicy(env), dropStrayFiles()],
     server: {
       // Keep changeOrigin false: the API checks Origin against Host.
       proxy: {
