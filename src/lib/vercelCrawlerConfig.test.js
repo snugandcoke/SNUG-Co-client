@@ -9,6 +9,7 @@ import { test } from 'node:test'
 // visitor does - that's cloaking.
 const config = JSON.parse(readFileSync(new URL('../../vercel.json', import.meta.url)))
 const shareRewrites = config.rewrites.filter((r) => r.destination.includes('/share/'))
+const ACTIVE_API_ORIGIN = 'https://snug-co-server.onrender.com'
 
 const SEARCH_CRAWLERS = ['googlebot', 'google-inspectiontool', 'adsbot-google', 'bingbot', 'duckduckbot', 'applebot', 'yandexbot', 'baiduspider']
 const LINK_PREVIEW_CRAWLERS = ['facebookexternalhit', 'twitterbot', 'whatsapp', 'linkedinbot', 'slackbot']
@@ -16,6 +17,14 @@ const LINK_PREVIEW_CRAWLERS = ['facebookexternalhit', 'twitterbot', 'whatsapp', 
 test('share routes exist for product, category and collection pages', () => {
   assert.equal(shareRewrites.length, 3)
   assert.ok(shareRewrites.some((r) => r.destination.includes('/share/collection/')))
+})
+
+test('every Vercel proxy target uses the active Render service', () => {
+  const proxyRewrites = config.rewrites.filter((r) => r.destination.startsWith('https://'))
+  assert.ok(proxyRewrites.length > 0)
+  for (const rewrite of proxyRewrites) {
+    assert.ok(rewrite.destination.startsWith(ACTIVE_API_ORIGIN), rewrite.destination)
+  }
 })
 
 test('the share-route User-Agent match never includes a search crawler', () => {

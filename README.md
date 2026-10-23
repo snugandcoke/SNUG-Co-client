@@ -58,11 +58,12 @@ Use `/admin`. `src/data/products.js` is the fallback catalog used only when `VIT
 
 ## Deploying
 
-> **Warning:** the `render.yaml` in the project folder above both repositories is a legacy file. It is not the current deployment definition and must not be applied. See the server README, "Legacy `render.yaml`". Production settings for the Vercel project (production branch, environment variable names) must be verified in the Vercel dashboard; they are not recorded here.
+> **Warning:** the `render.yaml` in the project folder above both repositories is a legacy file. It is not the current deployment definition and must not be applied. See the server README, "Legacy `render.yaml`". Cloudflare and Render dashboard settings must be verified in those dashboards; they are not all recorded here.
 
-Two ways to host this, depending on where the Flask API (`../server`) runs:
+The live site uses Cloudflare Workers. Vercel remains a supported alternative. Both proxy the same Render API so the browser keeps API requests and admin cookies on the site origin.
 
-- **Vercel (production):** set `VITE_API_URL=/api`. `vercel.json` proxies `/api/*` to `https://snug-co-api.onrender.com/api/*` and falls back to `index.html` for page routes, so the browser only talks to the site's own domain and admin cookies stay same-site. Product photos load straight from Cloudinary.
+- **Cloudflare Workers (live):** `wrangler.jsonc` serves `dist/` and runs `worker/index.js` for `/api/*`, `/uploads/*`, `/share/*`, `/sitemap.xml` and the product, shop and collection pages. The Worker proxies the API paths to `API_ORIGIN` (`https://snug-co-server.onrender.com`) so the admin cookie stays first-party, and sends link-preview crawlers (not search crawlers) to the matching `/share` page. Page routes fall back to `index.html` through `assets.not_found_handling = "single-page-application"`. Do not add `public/_redirects` with a `/* /index.html` rule: Cloudflare rejects it (error 100324). Set `ALLOWED_ORIGINS` and `SITE_URL` on the Render server to the Cloudflare site's origin. `.env.production` sets `VITE_API_URL=/api`, so a build with no variables still reaches the API. Deploy with `npx wrangler deploy` after `npm run build`.
+- **Vercel (supported alternative):** set `VITE_API_URL=/api`. `vercel.json` proxies API and share-preview requests to `https://snug-co-server.onrender.com` and falls back to `index.html` for page routes. Product photos load straight from Cloudinary.
 - **Same domain as the API:** Flask serves the built site itself and falls back to `index.html` for page routes (see `server/README.md`). No extra setup here.
 
 Either way, set `VITE_SITE_URL` so canonical and share links use the real domain.

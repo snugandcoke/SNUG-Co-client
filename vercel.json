@@ -2,11 +2,11 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://snug-co-api.onrender.com/api/:path*"
+      "destination": "https://snug-co-server.onrender.com/api/:path*"
     },
     {
       "source": "/sitemap.xml",
-      "destination": "https://snug-co-api.onrender.com/sitemap.xml"
+      "destination": "https://snug-co-server.onrender.com/sitemap.xml"
     },
     {
       "source": "/product/:slug",
@@ -17,7 +17,7 @@
           "value": "(?i).*(facebookexternalhit|facebot|twitterbot|whatsapp|linkedinbot|slackbot|telegrambot|discordbot|redditbot|pinterest|skypeuripreview|vkshare|w3c_validator).*"
         }
       ],
-      "destination": "https://snug-co-api.onrender.com/share/product/:slug"
+      "destination": "https://snug-co-server.onrender.com/share/product/:slug"
     },
     {
       "source": "/shop/:category",
@@ -28,7 +28,7 @@
           "value": "(?i).*(facebookexternalhit|facebot|twitterbot|whatsapp|linkedinbot|slackbot|telegrambot|discordbot|redditbot|pinterest|skypeuripreview|vkshare|w3c_validator).*"
         }
       ],
-      "destination": "https://snug-co-api.onrender.com/share/category/:category"
+      "destination": "https://snug-co-server.onrender.com/share/category/:category"
     },
     {
       "source": "/collections/:collectionSlug",
@@ -39,7 +39,7 @@
           "value": "(?i).*(facebookexternalhit|facebot|twitterbot|whatsapp|linkedinbot|slackbot|telegrambot|discordbot|redditbot|pinterest|skypeuripreview|vkshare|w3c_validator).*"
         }
       ],
-      "destination": "https://snug-co-api.onrender.com/share/collection/:collectionSlug"
+      "destination": "https://snug-co-server.onrender.com/share/collection/:collectionSlug"
     },
     {
       "source": "/((?!api/|images/|assets/|.*\\..*).*)",
