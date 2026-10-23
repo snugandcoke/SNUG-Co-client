@@ -345,7 +345,7 @@
   .card-media:hover img.primary {
     transform: scale(1.025);
   }
-  .card-media:hover img.secondary {
+  .card-media[data-secondary-ready='true']:hover img.secondary {
     opacity: 1;
   }
 }
