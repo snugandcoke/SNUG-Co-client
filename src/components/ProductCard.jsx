@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import { memo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AVAILABILITY_LABEL, BADGE_LABEL, formatPrice } from '../lib/format'
 import { Img } from './Img'
@@ -16,6 +16,12 @@ function badgeFor(product) {
 export const ProductCard = memo(function ProductCard({ product, sizes = CARD_SIZES, priority = false, eager = false }) {
   const [primary, secondary] = product.images
   const secondaryImage = getImage(secondary?.id)
+  const [hoverImageId, setHoverImageId] = useState(null)
+  const [loadedHoverId, setLoadedHoverId] = useState(null)
+  const [failedHoverId, setFailedHoverId] = useState(null)
+  const loadHoverImage = () => {
+    if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) setHoverImageId(secondary?.id)
+  }
   const badge = badgeFor(product)
   const soldOut = product.availability === 'sold-out'
   const showAvailability = product.availability !== 'available' && !soldOut
@@ -26,9 +32,12 @@ export const ProductCard = memo(function ProductCard({ product, sizes = CARD_SIZ
         to={`/product/${product.slug}`}
         className="block"
         onMouseEnter={() => prefetchProduct(product.slug)}
-        onFocus={() => prefetchProduct(product.slug)}
+        onFocus={() => {
+          prefetchProduct(product.slug)
+          loadHoverImage()
+        }}
       >
-        <div className="card-media relative">
+        <div className="card-media relative" onPointerEnter={loadHoverImage} data-secondary-ready={loadedHoverId === secondary?.id}>
           <Img
             id={primary?.id}
             alt={primary?.alt ?? product.name}
@@ -38,15 +47,18 @@ export const ProductCard = memo(function ProductCard({ product, sizes = CARD_SIZ
             className={soldOut ? 'opacity-60' : ''}
             imgClassName="primary"
           />
-          {secondaryImage && (
+          {secondaryImage && hoverImageId === secondary.id && failedHoverId !== secondary.id && (
             <img
+              key={secondary.id}
               src={secondaryImage.url(secondaryImage.widths?.[0] ?? 480)}
               srcSet={srcSetFor(secondaryImage, 'card')}
               sizes={sizes}
               alt=""
               aria-hidden="true"
-              loading="lazy"
+              loading="eager"
               decoding="async"
+              onLoad={() => setLoadedHoverId(secondary.id)}
+              onError={() => setFailedHoverId(secondary.id)}
               className="secondary pointer-events-none absolute inset-0 hidden h-full w-full object-cover opacity-0 [@media(hover:hover)_and_(pointer:fine)]:block"
             />
           )}
