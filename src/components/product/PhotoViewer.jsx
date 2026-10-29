@@ -35,7 +35,7 @@ export function PhotoViewer({ images, name, index, onIndex, onClose }) {
     <dialog
       ref={ref}
       aria-label={photo ? `${name}, photo ${index + 1} of ${count}` : `${name} photos`}
-      className="m-0 grid h-dvh max-h-none w-screen max-w-none place-items-center bg-black/70 p-3 sm:p-6"
+      className="m-0 h-dvh max-h-none w-screen max-w-none place-items-center bg-black/70 p-3 open:grid sm:p-6"
       onTouchStart={(e) => (touch.current = e.touches[0].clientX)}
       onTouchEnd={(e) => {
         const start = touch.current
