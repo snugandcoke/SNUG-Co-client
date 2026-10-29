@@ -1,32 +1,70 @@
 import { useEffect, useRef, useState } from 'react'
 import { useMediaQuery } from '../../hooks/useMediaQuery'
 import { Img } from '../Img'
+import { PhotoViewer } from './PhotoViewer'
 
 export function ProductGallery({ product }) {
   const desktop = useMediaQuery('(min-width: 1024px)')
   if (product.images.length === 0) return <Img id={null} alt={product.name} priority />
-  return desktop ? <GalleryStack images={product.images} /> : <GalleryCarousel images={product.images} name={product.name} />
+  return desktop ? <GalleryStack images={product.images} name={product.name} /> : <GalleryCarousel images={product.images} name={product.name} />
 }
 
-function GalleryStack({ images }) {
+// A photo that opens the full-screen viewer when tapped or activated from the keyboard.
+function PhotoButton({ index, count, onOpen, children }) {
+  return (
+    <button
+      type="button"
+      onClick={(e) => onOpen(index, e.currentTarget)}
+      className="block w-full cursor-zoom-in p-0 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-espresso"
+      aria-label={`View photo ${index + 1} of ${count} larger`}
+      aria-haspopup="dialog"
+    >
+      {children}
+    </button>
+  )
+}
+
+// Which photo the viewer shows, and where focus goes back to when it closes.
+function useViewer() {
+  const [index, setIndex] = useState(null)
+  const returnTo = useRef(null)
+  const open = (i, trigger) => {
+    returnTo.current = trigger
+    setIndex(i)
+  }
+  const close = () => {
+    setIndex(null)
+    returnTo.current?.focus({ preventScroll: true })
+  }
+  return { index, setIndex, open, close }
+}
+
+function GalleryStack({ images, name }) {
+  const viewer = useViewer()
   const oddLead = images.length % 2 === 1
   return (
-    <ul className="grid grid-cols-2 gap-2">
-      {images.map((img, i) => {
-        const wide = i === 0 && oddLead
-        return (
-          <li key={img.id} className={wide ? 'col-span-2' : ''}>
-            <Img id={img.id} alt={img.alt} sizes={wide ? '56vw' : '28vw'} ladder="large" priority={i === 0} />
-          </li>
-        )
-      })}
-    </ul>
+    <>
+      <ul className="grid grid-cols-2 gap-2">
+        {images.map((img, i) => {
+          const wide = i === 0 && oddLead
+          return (
+            <li key={img.id} className={wide ? 'col-span-2' : ''}>
+              <PhotoButton index={i} count={images.length} onOpen={viewer.open}>
+                <Img id={img.id} alt={img.alt} sizes={wide ? '56vw' : '28vw'} ladder="large" priority={i === 0} />
+              </PhotoButton>
+            </li>
+          )
+        })}
+      </ul>
+      <PhotoViewer images={images} name={name} index={viewer.index} onIndex={viewer.setIndex} onClose={viewer.close} />
+    </>
   )
 }
 
 function GalleryCarousel({ images, name }) {
   const trackRef = useRef(null)
   const [index, setIndex] = useState(0)
+  const viewer = useViewer()
 
   useEffect(() => {
     const track = trackRef.current
@@ -43,9 +81,14 @@ function GalleryCarousel({ images, name }) {
     return () => observer.disconnect()
   }, [images])
 
-  const scrollTo = (i) => {
+  const scrollTo = (i, behavior = 'smooth') => {
     const track = trackRef.current
-    track?.scrollTo({ left: track.clientWidth * i, behavior: 'smooth' })
+    track?.scrollTo({ left: track.clientWidth * i, behavior })
+  }
+  // Leave the strip on the photo the customer was last looking at in the viewer.
+  const closeViewer = () => {
+    if (viewer.index !== null) scrollTo(viewer.index, 'instant')
+    viewer.close()
   }
 
   return (
@@ -57,7 +100,9 @@ function GalleryCarousel({ images, name }) {
       >
         {images.map((img, i) => (
           <li key={img.id} data-index={i} className="w-full shrink-0 snap-center md:w-1/2">
-            <Img id={img.id} alt={img.alt} sizes="(min-width: 768px) 50vw, 100vw" ladder="large" priority={i === 0} />
+            <PhotoButton index={i} count={images.length} onOpen={viewer.open}>
+              <Img id={img.id} alt={img.alt} sizes="(min-width: 768px) 50vw, 100vw" ladder="large" priority={i === 0} />
+            </PhotoButton>
           </li>
         ))}
       </ul>
@@ -82,6 +127,7 @@ function GalleryCarousel({ images, name }) {
           </p>
         </>
       )}
+      <PhotoViewer images={images} name={name} index={viewer.index} onIndex={viewer.setIndex} onClose={closeViewer} />
     </div>
   )
 }
