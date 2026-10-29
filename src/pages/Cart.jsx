@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { WhatsAppIcon } from '../components/Icons'
 import { Img } from '../components/Img'
+import { DesignPicker } from '../components/product/DesignPicker'
 import { ChoiceGroup, QuantitySelector, TextOption } from '../components/product/VariantSelector'
 import { EmptyState, ShopperUnavailable } from '../components/States'
 import { useListing } from '../hooks/useCatalog'
@@ -13,7 +14,7 @@ import { cartCount, clearCart, loadShopper, refreshForCheckout, removeFromCart, 
 import { cartMessage, openWhatsApp, whatsappLink } from '../lib/whatsapp'
 
 function choicesText(line) {
-  return [line.color, line.size && `Size ${line.size}`, ...Object.entries(line.options || {}).map(([k, v]) => `${k}: ${v}`)]
+  return [line.color, line.design && `Design: ${line.design}`, line.size && `Size ${line.size}`, ...Object.entries(line.options || {}).map(([k, v]) => `${k}: ${v}`)]
     .filter(Boolean)
     .join(' · ')
 }
@@ -30,6 +31,9 @@ function bagItems(cart, products, listed) {
     .filter((i) => i.product)
 }
 
+// The photo of the design a bag line has, so the bag shows which design it is.
+const designPhoto = (product, line) => product.designs?.find((d) => d.name === line.design)?.image
+
 const isOrderable = (i) => !UNORDERABLE.has(i.product.availability)
 
 // Choices the server says no longer fit the piece: { field: message }, empty when they do.
@@ -39,6 +43,7 @@ const hasIssues = (line) => Object.keys(line.issues ?? {}).length > 0
 // again here, and the server checks the new choices before saving them.
 function ChooseAgain({ line, product, onSave }) {
   const [color, setColor] = useState(line.color ?? null)
+  const [design, setDesign] = useState(product.designs?.some((d) => d.name === line.design && d.available !== false) ? line.design : null)
   const [size, setSize] = useState(line.size ?? null)
   const [options, setOptions] = useState(line.options ?? {})
   // The issues are listed above; field errors appear here only when a save is refused.
@@ -56,7 +61,7 @@ function ChooseAgain({ line, product, onSave }) {
     setSaving(true)
     setFailure(null)
     try {
-      await onSave({ color, size, options })
+      await onSave({ color, design, size, options })
     } catch (err) {
       setErrors(err.fields ?? {})
       setFailure(err.message)
@@ -85,6 +90,19 @@ function ChooseAgain({ line, product, onSave }) {
               clear('color')
             }}
             error={errors.color}
+          />
+        )}
+        {product.designs?.length > 0 && (
+          <DesignPicker
+            label="Select Design"
+            name={`bag-${line.key}-design`}
+            designs={product.designs}
+            value={design}
+            onChange={(v) => {
+              setDesign(v)
+              clear('design')
+            }}
+            error={errors.design}
           />
         )}
         {product.sizes?.length > 0 && (
@@ -255,7 +273,16 @@ export default function Cart() {
                           {product.priceKES == null ? formatPrice(null) : formatPrice(product.priceKES * line.quantity)}
                         </p>
                       </div>
-                      {choicesText(line) && <p className="text-sm text-stone">{choicesText(line)}</p>}
+                      {choicesText(line) && (
+                        <div className="flex items-center gap-3">
+                          {line.design && designPhoto(product, line) && (
+                            <div className="w-10 shrink-0">
+                              <Img id={designPhoto(product, line)} alt="" ratio="1 / 1" ladder="small" sizes="40px" />
+                            </div>
+                          )}
+                          <p className="text-sm text-stone">{choicesText(line)}</p>
+                        </div>
+                      )}
                       {unavailable ? (
                         <p className="text-sm font-medium text-alert">No longer available to order. It won’t be included.</p>
                       ) : hasIssues(line) ? (

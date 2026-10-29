@@ -192,7 +192,7 @@ export function forget(key) {
 }
 
 // The choices too: a colour or size an admin removed must not stay on a page that offers it.
-const CHECKED_FIELDS = ['name', 'priceKES', 'availability', 'madeToOrder', 'colors', 'sizes', 'sizesNote', 'options']
+const CHECKED_FIELDS = ['name', 'priceKES', 'availability', 'madeToOrder', 'colors', 'designs', 'sizes', 'sizesNote', 'options']
 
 /**
  * Put the server's current name, price, availability and choices (from checkOrder) into every page

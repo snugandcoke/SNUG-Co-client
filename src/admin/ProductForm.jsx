@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Img } from '../components/Img'
 import { AVAILABILITY_LABEL } from '../lib/format'
 import { api } from './api'
 import { ImageManager } from './ImageManager'
@@ -28,7 +29,9 @@ const BLANK = {
   newArrival: true,
   published: true,
   nameConfirmed: true,
+  variationType: 'none',
   colors: [],
+  designs: [],
   sizes: [],
   sizesNote: '',
   options: [],
@@ -55,7 +58,10 @@ function toForm(p) {
     newArrival: p.newArrival,
     published: p.published,
     nameConfirmed: p.nameConfirmed,
+    variationType: p.variationType ?? (p.colors?.length ? 'color' : 'none'),
     colors: (p.colors ?? []).map((c) => ({ name: c.name, swatch: c.swatch ?? [] })),
+    // image: the stored photo; file and preview: a photo chosen but not saved yet.
+    designs: (p.designs ?? []).map((d) => ({ key: d.image, name: d.name, available: d.available !== false, image: d.image, file: null, preview: null })),
     sizes: p.sizes ?? [],
     sizesNote: p.sizesNote ?? '',
     options: (p.options ?? []).map((o) =>
@@ -94,7 +100,8 @@ function toPayload(f, { creating }) {
     newArrival: f.newArrival,
     published: f.published,
     nameConfirmed: f.nameConfirmed,
-    colors: f.colors.length ? f.colors : null,
+    variationType: f.variationType,
+    colors: f.variationType === 'color' && f.colors.length ? f.colors : null,
     sizes: f.sizes.length ? f.sizes : null,
     sizesNote: f.sizesNote,
     options: f.options.map((o) =>
@@ -108,6 +115,21 @@ function toPayload(f, { creating }) {
     tags: splitList(f.tagsText, ','),
     sourcePost: f.sourcePost,
   }
+}
+
+// What stops designs from being saved, or null. The server checks again.
+function designProblem(f) {
+  if (f.variationType !== 'design') return null
+  if (f.designs.length === 0) return 'Add at least one design, or choose another variation type.'
+  const names = new Set()
+  for (const [i, d] of f.designs.entries()) {
+    const name = d.name.trim()
+    if (!name) return `Give design ${i + 1} a name.`
+    if (names.has(name.toLowerCase())) return `“${name}” is listed twice.`
+    names.add(name.toLowerCase())
+    if (!d.image && !d.file) return `Add a photo for “${name}”.`
+  }
+  return null
 }
 
 function Section({ title, description, children }) {
@@ -186,14 +208,31 @@ function ProductEditor() {
     setSaving(true)
     setErrors({})
     try {
+      const missing = designProblem(form)
+      if (missing) {
+        setErrors({ designs: missing })
+        notify(missing, 'error')
+        return
+      }
       const payload = toPayload(form, { creating })
+      const { product: saved } = creating ? await api.createProduct(payload) : await api.updateProduct(id, payload)
+      let latest = saved
+      if (form.variationType === 'design') {
+        try {
+          latest = await saveDesigns(saved.id)
+        } catch (err) {
+          if (!creating) throw err
+          // The product exists now: carry on to its page, so saving again doesn't make a second one.
+          notify(`Product created, but its designs weren’t saved: ${err.message} Add them here.`, 'error')
+          navigate(`/admin/products/${saved.id}`, { replace: true })
+          return
+        }
+      }
       if (creating) {
-        const { product: created } = await api.createProduct(payload)
-        notify('Product created. Add its photos next.')
-        navigate(`/admin/products/${created.id}`, { replace: true })
+        notify(form.variationType === 'design' ? 'Product created.' : 'Product created. Add its photos next.')
+        navigate(`/admin/products/${saved.id}`, { replace: true })
       } else {
-        const { product: updated } = await api.updateProduct(id, payload)
-        adopt(updated)
+        adopt(latest)
         notify('Changes saved')
       }
     } catch (err) {
@@ -207,6 +246,27 @@ function ProductEditor() {
       }
     } finally {
       setSaving(false)
+    }
+  }
+
+  // Design photos are uploaded one by one, then the designs are saved with their photo ids. Photos already
+  // uploaded stay on the form if a later step fails, so saving again doesn't upload them twice.
+  const saveDesigns = async (productId) => {
+    const designs = [...form.designs]
+    try {
+      for (let i = 0; i < designs.length; i++) {
+        if (!designs[i].file) continue
+        const res = await api.uploadImages(productId, [designs[i].file], 0.5, 'design')
+        designs[i] = { ...designs[i], image: res.uploaded[0], file: null }
+      }
+      const { product: updated } = await api.updateProduct(productId, {
+        variationType: 'design',
+        designs: designs.map((d) => ({ name: d.name, image: d.image, available: d.available })),
+      })
+      return updated
+    } catch (err) {
+      setForm((f) => ({ ...f, designs }))
+      throw err
     }
   }
 
@@ -240,6 +300,11 @@ function ProductEditor() {
   )
 
   const updateRow = (key, index, changes) => set(key, form[key].map((row, i) => (i === index ? { ...row, ...changes } : row)))
+  const moveRow = (key, index, delta) => {
+    const rows = [...form[key]]
+    ;[rows[index], rows[index + delta]] = [rows[index + delta], rows[index]]
+    set(key, rows)
+  }
   const removeRow = (key, index) => set(key, form[key].filter((_, i) => i !== index))
   const toggle = (key, value) =>
     set(key, form[key].includes(value) ? form[key].filter((v) => v !== value) : [...form[key], value])
@@ -354,6 +419,97 @@ function ProductEditor() {
           </div>
         </Section>
 
+        <Section title="Variation" description="What customers choose between before ordering: colours, or designs shown by a photo of the fabric or pattern.">
+          <Field label="Variation type">
+            {(field) => (
+              <select {...field} value={form.variationType} onChange={(e) => set('variationType', e.target.value)} className={`${inputClass} sm:w-56`}>
+                <option value="none">None</option>
+                <option value="color">Color</option>
+                <option value="design">Design</option>
+              </select>
+            )}
+          </Field>
+          {product && form.variationType !== (product.variationType ?? 'none') && product.variationType && product.variationType !== 'none' && (
+            <p className="text-[0.8125rem] text-stone">
+              Saving removes the {product.variationType === 'design' ? 'designs and their photos' : 'colours'} this piece has now.
+            </p>
+          )}
+        </Section>
+
+        {form.variationType === 'design' && (
+          <Section title="Designs" description="Customers pick one by its photo, so use a close photo of the pattern. Each design needs a name and a photo (at least 600px wide).">
+            {form.designs.map((design, i) => (
+              <div key={design.key} className="grid grid-cols-[5rem_1fr] gap-4 border border-line p-3 sm:grid-cols-[6rem_1fr]">
+                <div className="w-full">
+                  {design.preview ? (
+                    <img src={design.preview} alt="" className="aspect-square w-full object-cover" />
+                  ) : (
+                    <Img id={design.image} alt={design.name} ratio="1 / 1" ladder="small" sizes="96px" eager />
+                  )}
+                </div>
+                <div className="grid min-w-0 gap-3">
+                  <Field label={`Design ${i + 1} name`}>
+                    {(field) => (
+                      <input {...field} type="text" value={design.name} maxLength={40} placeholder="e.g. Pink floral" onChange={(e) => updateRow('designs', i, { name: e.target.value })} className={inputClass} />
+                    )}
+                  </Field>
+                  <div>
+                    <label htmlFor={`design-photo-${design.key}`} className="mb-1.5 block text-sm">
+                      {design.image || design.file ? 'Replace photo' : 'Photo'}
+                    </label>
+                    <input
+                      id={`design-photo-${design.key}`}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (!file) return
+                        if (design.preview) URL.revokeObjectURL(design.preview)
+                        updateRow('designs', i, { file, preview: URL.createObjectURL(file) })
+                      }}
+                      className="block w-full text-sm file:mr-3 file:min-h-11 file:cursor-pointer file:rounded-[2px] file:border file:border-ink file:bg-paper file:px-4 file:text-sm hover:file:bg-bone"
+                    />
+                  </div>
+                  <Check label="Available" hint="Untick if this design is sold out. Customers can still see it." checked={design.available} onChange={(v) => updateRow('designs', i, { available: v })} />
+                  <div className="flex flex-wrap gap-2">
+                    <button type="button" className={smallButton} disabled={i === 0} onClick={() => moveRow('designs', i, -1)} aria-label={`Move design ${i + 1} earlier`}>
+                      ←
+                    </button>
+                    <button type="button" className={smallButton} disabled={i === form.designs.length - 1} onClick={() => moveRow('designs', i, 1)} aria-label={`Move design ${i + 1} later`}>
+                      →
+                    </button>
+                    <button
+                      type="button"
+                      className={`${smallButton} ml-auto text-alert`}
+                      onClick={() => {
+                        if (design.preview) URL.revokeObjectURL(design.preview)
+                        removeRow('designs', i)
+                      }}
+                    >
+                      Remove design
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {err('designs') && (
+              <p role="alert" aria-invalid="true" tabIndex={-1} className="text-[0.8125rem] font-medium text-alert">
+                {err('designs')}
+              </p>
+            )}
+            {form.designs.length < 12 && (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => set('designs', [...form.designs, { key: `new-${Date.now()}-${form.designs.length}`, name: '', available: true, image: null, file: null, preview: null }])}
+              >
+                Add a design
+              </button>
+            )}
+          </Section>
+        )}
+
+        {form.variationType === 'color' && (
         <Section title="Colours" description="Shown as choices customers pick before ordering. Leave empty if the piece comes in one colour.">
           {form.colors.map((color, i) => (
             <div key={i} className="grid gap-3 border border-line p-3 sm:grid-cols-[1fr_auto_auto] sm:items-end">
@@ -403,6 +559,7 @@ function ProductEditor() {
             Add a colour
           </button>
         </Section>
+        )}
 
         <Section title="Sizes" description="Tick the sizes you make it in. Leave all empty to ask customers to share their size on WhatsApp.">
           <div>

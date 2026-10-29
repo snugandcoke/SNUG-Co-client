@@ -68,6 +68,11 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link to="/size-guide" className={link}>
+                  Size guide
+                </Link>
+              </li>
+              <li>
                 <Link to="/contact" className={link}>
                   Contact
                 </Link>

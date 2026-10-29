@@ -21,6 +21,7 @@ const Contact = lazy(() => import('./pages/Contact'))
 const Orders = lazy(() => import('./pages/Orders'))
 const Cart = lazy(() => import('./pages/Cart'))
 const Wishlist = lazy(() => import('./pages/Wishlist'))
+const SizeGuide = lazy(() => import('./pages/SizeGuide'))
 
 const deferred = (Page, fallback = <div className="min-h-[70vh]" />) => <Suspense fallback={fallback}>{Page}</Suspense>
 
@@ -75,6 +76,7 @@ const router = createBrowserRouter([
       { path: '/product/:slug', element: deferred(<Product />, <ProductFallback />) },
       { path: '/about', element: deferred(<About />) },
       { path: '/contact', element: deferred(<Contact />) },
+      { path: '/size-guide', element: deferred(<SizeGuide />) },
       { path: '/shipping-and-orders', element: deferred(<Orders />) },
       { path: '/cart', element: deferred(<Cart />) },
       { path: '/wishlist', element: deferred(<Wishlist />) },

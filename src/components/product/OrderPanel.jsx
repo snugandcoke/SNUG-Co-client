@@ -5,16 +5,19 @@ import { applyOrderCheck } from '../../lib/catalog'
 import { AVAILABILITY_LABEL, formatPrice } from '../../lib/format'
 import { describeChange, orderChanges } from '../../lib/order'
 import { absoluteUrl } from '../../lib/seo'
+import { sizeGuidePath } from '../../lib/sizeGuide'
 import { addToCart, checkOrder, shopperEnabled } from '../../lib/shopper'
 import { openWhatsApp, orderMessage, restockMessage, whatsappLink } from '../../lib/whatsapp'
 import { BagIcon, WhatsAppIcon } from '../Icons'
 import { WishlistButton } from '../WishlistButton'
+import { DesignPicker } from './DesignPicker'
 import { ChoiceGroup, QuantitySelector, TextOption } from './VariantSelector'
 
 const OUT_OF_REACH = new Set(['sold-out', 'coming-soon'])
 
 export function OrderPanel({ product }) {
   const [color, setColor] = useState(product.colors?.length === 1 ? product.colors[0].name : null)
+  const [design, setDesign] = useState(null)
   const [size, setSize] = useState(product.sizes?.length === 1 ? product.sizes[0] : null)
   const [options, setOptions] = useState({})
   const [quantity, setQuantity] = useState(1)
@@ -24,13 +27,13 @@ export function OrderPanel({ product }) {
   const [checking, setChecking] = useState(false)
   const [orderNote, setOrderNote] = useState(null)
 
-  const refs = { color: useRef(null), size: useRef(null) }
+  const refs = { color: useRef(null), design: useRef(null), size: useRef(null) }
   const optionRefs = useRef({})
   const ctaRef = useRef(null)
 
   const unavailable = OUT_OF_REACH.has(product.availability)
   const productUrl = absoluteUrl(`/product/${product.slug}`)
-  const selection = { color, size, options, quantity }
+  const selection = { color, design, size, options, quantity }
 
   const restockHref = whatsappLink(restockMessage({ product, productUrl }))
 
@@ -45,6 +48,7 @@ export function OrderPanel({ product }) {
   function validate() {
     const next = {}
     if (product.colors?.length && !color) next.color = 'Choose a colour to continue.'
+    if (product.designs?.length && !design) next.design = 'Choose a design to continue.'
     if (product.sizes?.length && !size) next.size = 'Choose a size to continue.'
     for (const option of product.options ?? []) {
       if (option.required && !options[option.name]?.trim()) {
@@ -66,6 +70,7 @@ export function OrderPanel({ product }) {
   function clearChangedChoices(issues) {
     setErrors(issues)
     if ('color' in issues) setColor(null)
+    if ('design' in issues) setDesign(null)
     if ('size' in issues) setSize(null)
     const names = Object.keys(issues)
       .filter((key) => key.startsWith('option:'))
@@ -84,7 +89,7 @@ export function OrderPanel({ product }) {
     try {
       const opened = await openWhatsApp(async () => {
         if (!shopperEnabled) return link(product) // no API (local preview): nothing to check against
-        const { products, items } = await checkOrder([{ productId: product.id, color, size, options, quantity }])
+        const { products, items } = await checkOrder([{ productId: product.id, color, design, size, options, quantity }])
         const fresh = products[product.id] ?? null
         const issues = items[0]?.issues ?? {}
         const choiceProblem = Object.keys(issues).length > 0
@@ -101,7 +106,7 @@ export function OrderPanel({ product }) {
         return link({ ...product, ...fresh })
       })
       if (opened) {
-        track(EVENTS.whatsappOrderClicked, { product: product.slug, price: product.priceKES, color, size, quantity, placement })
+        track(EVENTS.whatsappOrderClicked, { product: product.slug, price: product.priceKES, color, design, size, quantity, placement })
       }
     } catch (err) {
       setOrderNote(err.message)
@@ -116,8 +121,8 @@ export function OrderPanel({ product }) {
     if (!validate()) return
     setBag({ busy: true, message: null, added: false })
     try {
-      await addToCart({ productId: product.id, color, size, options, quantity })
-      track(EVENTS.addedToCart, { product: product.slug, price: product.priceKES, color, size, quantity })
+      await addToCart({ productId: product.id, color, design, size, options, quantity })
+      track(EVENTS.addedToCart, { product: product.slug, price: product.priceKES, color, design, size, quantity })
       setBag({ busy: false, message: 'Added to your bag.', added: true })
     } catch (err) {
       setErrors(err.fields || {})
@@ -146,7 +151,7 @@ export function OrderPanel({ product }) {
       <div className="mt-8 space-y-7">
         {product.colors?.length > 0 && (
           <ChoiceGroup
-            label="Colour"
+            label="Select Colour"
             name={`${product.slug}-colour`}
             values={product.colors.map((c) => c.name)}
             swatches={Object.fromEntries(product.colors.map((c) => [c.name, c.swatch]))}
@@ -157,6 +162,21 @@ export function OrderPanel({ product }) {
             }}
             error={errors.color}
             groupRef={refs.color}
+          />
+        )}
+
+        {product.designs?.length > 0 && (
+          <DesignPicker
+            label="Select Design"
+            name={`${product.slug}-design`}
+            designs={product.designs}
+            value={design}
+            onChange={(v) => {
+              setDesign(v)
+              setErrors((e) => ({ ...e, design: undefined }))
+            }}
+            error={errors.design}
+            groupRef={refs.design}
           />
         )}
 
@@ -172,11 +192,19 @@ export function OrderPanel({ product }) {
             }}
             error={errors.size}
             groupRef={refs.size}
+            aside={
+              <Link to={sizeGuidePath(product.slug)} className="link tap text-sm">
+                Size Guide
+              </Link>
+            }
           />
         ) : (
           <div className="border-l-2 border-taupe pl-4 text-[0.9375rem]">
             <p>Size</p>
             <p className="mt-1 text-stone">{product.sizesNote || 'Tell us your size on WhatsApp and we’ll confirm the fit.'}</p>
+            <Link to={sizeGuidePath(product.slug)} className="link tap mt-1 inline-block text-sm">
+              Size Guide
+            </Link>
           </div>
         )}
 

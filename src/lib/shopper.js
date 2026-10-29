@@ -1,5 +1,6 @@
 import { useEffect, useSyncExternalStore } from 'react'
 import { CHECKOUT_DEADLINE, CHECKOUT_TIMED_OUT, CHECKOUT_TIMEOUT, fetchText, FetchError, within } from './http'
+import { registerImages } from './images'
 import { CHANGE_SIGNAL, FRESH_FOR, isChangeSignal, shouldReadServer, shouldRefreshOnReturn } from './shopperSync'
 
 // Wishlist and cart live in a signed, HttpOnly cookie set by the API (/api/shopper).
@@ -86,6 +87,8 @@ async function send(path = '', { method = 'GET', json, timeout, retries } = {}) 
   }
   if (method !== 'GET') announceChange()
   loadedAt = Date.now()
+  // Photos of the designs in the bag.
+  if (data.images) registerImages(data.images)
   publish(data)
   return data
 }
@@ -158,7 +161,7 @@ export function refreshForCheckout() {
 }
 
 /**
- * Checks pieces right before an order is sent. lines: [{ productId, color, size, options }], the
+ * Checks pieces right before an order is sent. lines: [{ productId, color, design, size, options }], the
  * customer's choices as they will be sent. Returns:
  *   products: the server's current name, price and availability, by id (a hidden or deleted piece is
  *             missing), never cached

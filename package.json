@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint .",
-    "test": "node --test src/lib/order.test.js src/lib/http.test.js src/lib/shopperSync.test.js src/lib/vercelCrawlerConfig.test.js src/lib/cloudflareWorker.test.js src/lib/shopRouting.test.js"
+    "test": "node --test src/lib/order.test.js src/lib/http.test.js src/lib/shopperSync.test.js src/lib/vercelCrawlerConfig.test.js src/lib/cloudflareWorker.test.js src/lib/shopRouting.test.js src/lib/sizeGuide.test.js"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",

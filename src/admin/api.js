@@ -52,10 +52,12 @@ export const api = {
   deleteProduct: (id) => request(`/admin/products/${id}`, { method: 'DELETE' }),
   moveProduct: (id, direction) => request(`/admin/products/${id}/move`, { method: 'POST', json: { direction } }),
 
-  uploadImages: (id, files, focus) => {
+  // role 'design': the photo of one of the product's designs, kept out of its gallery.
+  uploadImages: (id, files, focus, role = 'gallery') => {
     const form = new FormData()
     for (const file of files) form.append('files', file)
     form.append('focus', String(focus))
+    if (role !== 'gallery') form.append('role', role)
     return request(`/admin/products/${id}/images`, { method: 'POST', form })
   },
   updateImage: (id, imageId, alt) => request(`/admin/products/${id}/images/${imageId}`, { method: 'PATCH', json: { alt } }),

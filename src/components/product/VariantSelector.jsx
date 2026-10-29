@@ -1,7 +1,8 @@
 import { useId } from 'react'
 import { MinusIcon, PlusIcon } from '../Icons'
 
-export function ChoiceGroup({ label, name, values, value, onChange, error, groupRef, swatches }) {
+// aside: something shown opposite the label, such as the size guide link.
+export function ChoiceGroup({ label, name, values, value, onChange, error, groupRef, swatches, aside }) {
   const errorId = useId()
   return (
     <fieldset ref={groupRef} tabIndex={-1} aria-describedby={error ? errorId : undefined} className="outline-none">
@@ -10,6 +11,7 @@ export function ChoiceGroup({ label, name, values, value, onChange, error, group
           {label}
           {value && <span className="text-stone">: {value}</span>}
         </span>
+        {aside}
       </legend>
       {error && (
         <p id={errorId} role="alert" className="mt-1 text-sm font-medium text-alert">

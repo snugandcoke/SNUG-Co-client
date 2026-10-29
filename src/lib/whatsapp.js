@@ -56,6 +56,7 @@ export function orderMessage({ product, selection, productUrl }) {
   const lines = [`Hi ${site.brandName}, I'd like to order the ${product.name}.`, '']
 
   if (product.colors?.length) lines.push(`Colour: ${selection.color}`)
+  if (product.designs?.length) lines.push(`Design: ${selection.design}`)
   if (product.sizes?.length) lines.push(`Size: ${selection.size}`)
   else lines.push('Size: I’ll share my size here')
   for (const option of product.options ?? []) {
@@ -83,6 +84,7 @@ export function cartMessage(items) {
     lines.push(`${i + 1}. ${product.name}`)
     const choices = []
     if (line.color) choices.push(`Colour: ${line.color}`)
+    if (line.design) choices.push(`Design: ${line.design}`)
     if (line.size) choices.push(`Size: ${line.size}`)
     else if (!product.sizes?.length) choices.push('Size: I’ll share my size here')
     for (const [name, value] of Object.entries(line.options || {})) choices.push(`${name}: ${value}`)
