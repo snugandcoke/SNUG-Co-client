@@ -112,7 +112,7 @@ function toPayload(f, { creating }) {
     details: splitList(f.detailsText, '\n'),
     material: f.material,
     care: f.care,
-    tags: splitList(f.tagsText, ','),
+    tags: [...new Set(splitList(f.tagsText, /[,;\n]/).map((t) => t.toLowerCase()))],
     sourcePost: f.sourcePost,
   }
 }
@@ -604,7 +604,7 @@ function ProductEditor() {
                 )}
               </Field>
               {option.type === 'choice' ? (
-                <Field label="Choices" hint="Separate with commas." className="sm:col-span-2">
+                <Field label="Choices" hint="Optional. Separate with commas, semicolons or new lines." className="sm:col-span-2">
                   {(field) => (
                     <input {...field} type="text" value={option.valuesText} placeholder="Pants, Shorts" onChange={(e) => updateRow('options', i, { valuesText: e.target.value })} className={inputClass} />
                   )}
@@ -653,8 +653,10 @@ function ProductEditor() {
               {text('care', { maxLength: 400 })}
             </Field>
           </div>
-          <Field label="Search words" error={err('tags')} hint="Separate with commas. Helps customers find it, e.g. green, sage, tracksuit.">
-            {text('tagsText')}
+          <Field label="Search words" error={err('tags')} hint="Optional. Separate with commas, semicolons or new lines. Helps customers find it, e.g. green, sage, tracksuit.">
+            {(field) => (
+              <textarea {...field} rows={2} value={form.tagsText} onChange={(e) => set('tagsText', e.target.value)} className={textareaClass} />
+            )}
           </Field>
           <Field label="Instagram post" error={err('sourcePost')} hint="Optional. For your own reference.">
             {text('sourcePost', { type: 'url', placeholder: 'https://www.instagram.com/p/…' })}
