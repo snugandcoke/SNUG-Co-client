@@ -5,13 +5,17 @@ import { ThemeToggle } from '../ThemeToggle'
 import { Wordmark } from '../Wordmark'
 
 // Every page links to each category by name, so Google can discover and crawl them from
-// anywhere on the site, not just the homepage tiles. Matches server/seed/catalog.json's
-// categories; update here too if a category is ever added, renamed or removed.
+// anywhere on the site, not just the homepage tiles. Mirrors the categories set in Admin, in
+// the same order; update here too if a category is ever added, renamed or removed.
 const SHOP_CATEGORIES = [
-  { to: '/shop/lounge-sets', label: 'Lounge sets' },
-  { to: '/shop/tracksuits', label: 'Tracksuits' },
+  { to: '/shop/sets', label: 'Sets' },
+  { to: '/shop/kids', label: 'Kids' },
   { to: '/shop/jackets', label: 'Jackets' },
-  { to: '/shop/sweatshirts', label: 'Sweatshirts & tops' },
+  { to: '/shop/hoodies-and-sweatshirts', label: 'Hoodies & sweatshirts' },
+  { to: '/shop/jerseys', label: 'Jerseys' },
+  { to: '/shop/bottoms', label: 'Bottoms' },
+  { to: '/shop/jumpsuits', label: 'Jumpsuits' },
+  { to: '/shop/outerwear', label: 'Outerwear' },
 ]
 
 export function Footer() {
