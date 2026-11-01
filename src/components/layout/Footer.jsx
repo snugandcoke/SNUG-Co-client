@@ -12,10 +12,6 @@ const SHOP_CATEGORIES = [
   { to: '/shop/kids', label: 'Kids' },
   { to: '/shop/jackets', label: 'Jackets' },
   { to: '/shop/hoodies-and-sweatshirts', label: 'Hoodies & sweatshirts' },
-  { to: '/shop/jerseys', label: 'Jerseys' },
-  { to: '/shop/bottoms', label: 'Bottoms' },
-  { to: '/shop/jumpsuits', label: 'Jumpsuits' },
-  { to: '/shop/outerwear', label: 'Outerwear' },
 ]
 
 export function Footer() {
@@ -26,7 +22,7 @@ export function Footer() {
 
   return (
     <footer className="bg-bar text-on-bar">
-      <div className="shell grid gap-10 pb-10 pt-14 md:grid-cols-12 md:gap-8 lg:pt-20">
+      <div className="shell grid gap-8 pb-8 pt-10 md:grid-cols-12 md:gap-8 lg:pt-12">
         <div className="md:col-span-5 lg:col-span-4">
           <Link to="/" className="inline-flex min-h-11 items-center text-[2rem]" aria-label="Snug & Co. home">
             <Wordmark inverse />
