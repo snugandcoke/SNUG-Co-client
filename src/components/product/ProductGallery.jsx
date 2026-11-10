@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useMediaQuery } from '../../hooks/useMediaQuery'
+import { preloadImage } from '../../lib/images'
 import { Img } from '../Img'
-import { PhotoViewer } from './PhotoViewer'
+import { PhotoViewer, VIEWER_SIZES } from './PhotoViewer'
 
 export function ProductGallery({ product }) {
   const desktop = useMediaQuery('(min-width: 1024px)')
@@ -10,10 +11,15 @@ export function ProductGallery({ product }) {
 }
 
 // A photo that opens the full-screen viewer when tapped or activated from the keyboard.
-function PhotoButton({ index, count, onOpen, children }) {
+// Preloading on pointerdown/keydown (before the click that actually opens the viewer) gives the
+// browser a head start fetching the viewer's bigger image.
+function PhotoButton({ index, count, imageId, onOpen, children }) {
+  const warm = () => preloadImage(imageId, 'large', VIEWER_SIZES)
   return (
     <button
       type="button"
+      onPointerDown={warm}
+      onKeyDown={warm}
       onClick={(e) => onOpen(index, e.currentTarget)}
       className="block w-full cursor-zoom-in p-0 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-espresso"
       aria-label={`View photo ${index + 1} of ${count} larger`}
@@ -49,7 +55,7 @@ function GalleryStack({ images, name }) {
           const wide = i === 0 && oddLead
           return (
             <li key={img.id} className={wide ? 'col-span-2' : ''}>
-              <PhotoButton index={i} count={images.length} onOpen={viewer.open}>
+              <PhotoButton index={i} count={images.length} imageId={img.id} onOpen={viewer.open}>
                 <Img id={img.id} alt={img.alt} sizes={wide ? '56vw' : '28vw'} ladder="large" priority={i === 0} />
               </PhotoButton>
             </li>
@@ -100,7 +106,7 @@ function GalleryCarousel({ images, name }) {
       >
         {images.map((img, i) => (
           <li key={img.id} data-index={i} className="w-full shrink-0 snap-center md:w-1/2">
-            <PhotoButton index={i} count={images.length} onOpen={viewer.open}>
+            <PhotoButton index={i} count={images.length} imageId={img.id} onOpen={viewer.open}>
               <Img id={img.id} alt={img.alt} sizes="(min-width: 768px) 50vw, 100vw" ladder="large" priority={i === 0} />
             </PhotoButton>
           </li>

@@ -50,6 +50,25 @@ export function fallbackSrc(image, ladder) {
   return image.url(widths.find((w) => w >= 640) ?? widths.at(-1))
 }
 
+const preloaded = new Set()
+
+/** Warm the browser's cache for a photo before it's shown at a bigger size, e.g. right when a
+ * gallery thumbnail is tapped, so the viewer's <img> doesn't start its fetch from scratch.
+ * `sizes` must match what the destination <img> will use, or the browser picks a different
+ * width and the preload is wasted. */
+export function preloadImage(id, ladder, sizes) {
+  const image = getImage(id)
+  if (!image || preloaded.has(id)) return
+  preloaded.add(id)
+  const link = document.createElement('link')
+  link.rel = 'preload'
+  link.as = 'image'
+  link.href = fallbackSrc(image, ladder)
+  link.imageSrcset = srcSetFor(image, ladder)
+  link.imageSizes = sizes
+  document.head.appendChild(link)
+}
+
 export function imageSrc(id, width) {
   const image = getImage(id)
   if (!image) return null

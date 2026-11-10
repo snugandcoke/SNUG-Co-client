@@ -7,6 +7,8 @@ import { Img } from '../Img'
 
 // Card height: fits the screen with a margin, never taller than 46rem.
 const CARD_HEIGHT = 'min(calc(100dvh - 3rem), 46rem)'
+// Shared with ProductGallery's preload-on-click, so the browser's srcset pick matches exactly.
+export const VIEWER_SIZES = '(min-width: 1024px) 60vh, 100vw'
 
 // Centered card look at one of a product's photos. `index` is the photo on show, or null when closed.
 // The <dialog> sits in the browser's top layer, so nothing on the page can cover it.
@@ -60,7 +62,7 @@ export function PhotoViewer({ images, name, index, onIndex, onClose }) {
 
           <div className="relative flex min-h-0 flex-1 items-center justify-center px-4">
             <div className="w-full" style={{ maxWidth: `min(100%, calc((${CARD_HEIGHT} - 10.5rem) * ${ratio}))` }}>
-              <Img key={photo.id} id={photo.id} alt={photo.alt || name} ratio={`${ratio}`} ladder="large" sizes="(min-width: 1024px) 60vh, 100vw" priority />
+              <Img key={photo.id} id={photo.id} alt={photo.alt || name} ratio={`${ratio}`} ladder="large" sizes={VIEWER_SIZES} priority />
             </div>
             {count > 1 && (
               <>
