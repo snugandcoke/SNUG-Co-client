@@ -91,11 +91,12 @@ function contentSecurityPolicy(env) {
         const apiOrigin = /^https?:\/\//.test(env.VITE_API_URL || '') ? ` ${new URL(env.VITE_API_URL).origin}` : ''
         const policy = [
           "default-src 'self'",
-          `script-src 'self' ${hashes.join(' ')}`,
+          // Cloudflare injects its Web Analytics beacon script when the zone has it turned on.
+          `script-src 'self' https://static.cloudflareinsights.com ${hashes.join(' ')}`,
           "style-src 'self' https://fonts.googleapis.com",
           'font-src https://fonts.gstatic.com',
           "img-src 'self' https://res.cloudinary.com",
-          `connect-src 'self'${apiOrigin}`,
+          `connect-src 'self' https://cloudflareinsights.com${apiOrigin}`,
           "object-src 'none'",
           "base-uri 'self'",
           "form-action 'self'",
@@ -109,9 +110,22 @@ function contentSecurityPolicy(env) {
   }
 }
 
+// The one public origin. A host-provided VITE_SITE_URL on a hosting hostname (workers.dev, vercel.app,
+// onrender.com) or an empty one is replaced, so robots.txt, canonical and og:url never name them.
+const CANONICAL_SITE_URL = 'https://snugandco.co.ke'
+const HOSTING_HOSTS = /\.(workers\.dev|vercel\.app|onrender\.com)$/i
+
+function canonicalSiteUrl(value) {
+  const url = (value || '').trim().replace(/\/+$/, '')
+  if (!SITE_ORIGIN.test(url) || HOSTING_HOSTS.test(new URL(url).hostname)) return CANONICAL_SITE_URL
+  return url
+}
+
 export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const siteUrl = (env.VITE_SITE_URL || '').trim().replace(/\/+$/, '')
+  const siteUrl = canonicalSiteUrl(env.VITE_SITE_URL)
+  // index.html's %VITE_SITE_URL% and import.meta.env read the process value, so pin it here.
+  process.env.VITE_SITE_URL = siteUrl
 
   if (command === 'build') {
     const problems = launchProblems(env, siteUrl)
