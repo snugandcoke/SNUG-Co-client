@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { WhatsAppLink } from '../components/ContactLinks'
 import { ChevronIcon, CloseIcon, WhatsAppIcon } from '../components/Icons'
 import { site } from '../config/site'
-import { chartIsComplete, FIT_GUIDE, HOW_TO_MEASURE, MEASURING_TIPS, SIZE_CHART } from '../data/sizeGuide'
+import { chartIsComplete, FIT_GUIDE, HOW_TO_MEASURE, MEASURING_TIPS } from '../data/sizeGuide'
 import { backTarget } from '../lib/sizeGuide'
 import { useSeo } from '../lib/seo'
 
@@ -43,38 +43,6 @@ export default function SizeGuide() {
             and we’ll confirm the right size for you.
           </p>
         )}
-        <div className="mt-8 max-w-2xl overflow-x-auto" tabIndex={0} role="region" aria-labelledby="chart-title">
-          <table className="w-full border-collapse text-left text-[0.9375rem] tabular-nums">
-            <caption className="sr-only">Garment measurements in inches for each size</caption>
-            <thead>
-              <tr className="border-b border-ink">
-                <th scope="col" className="py-3 pr-4 font-medium">
-                  Size
-                </th>
-                {['Chest', 'Full length', 'Sleeve length'].map((name) => (
-                  <th key={name} scope="col" className="px-4 py-3 font-medium">
-                    {name} <span className="font-normal text-stone">(in)</span>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {SIZE_CHART.map((row) => (
-                <tr key={row.size} className="border-b border-line">
-                  <th scope="row" className="py-3.5 pr-4 font-medium">
-                    {row.size}
-                  </th>
-                  {[row.chest, row.length, row.sleeve].map((value, i) => (
-                    <td key={i} className={`px-4 py-3.5 ${value ? '' : 'text-stone'}`}>
-                      {value || <span aria-label="To be confirmed">–</span>}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
         <button
           type="button"
           onClick={() => setZoomed(true)}
