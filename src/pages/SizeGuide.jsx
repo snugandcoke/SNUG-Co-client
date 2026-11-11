@@ -1,6 +1,7 @@
+import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { WhatsAppLink } from '../components/ContactLinks'
-import { ChevronIcon, WhatsAppIcon } from '../components/Icons'
+import { ChevronIcon, CloseIcon, WhatsAppIcon } from '../components/Icons'
 import { site } from '../config/site'
 import { chartIsComplete, FIT_GUIDE, HOW_TO_MEASURE, MEASURING_TIPS, SIZE_CHART } from '../data/sizeGuide'
 import { backTarget } from '../lib/sizeGuide'
@@ -9,6 +10,7 @@ import { useSeo } from '../lib/seo'
 export default function SizeGuide() {
   const { search } = useLocation()
   const back = backTarget(search)
+  const [zoomed, setZoomed] = useState(false)
 
   useSeo({
     title: 'Size guide',
@@ -72,7 +74,48 @@ export default function SizeGuide() {
             </tbody>
           </table>
         </div>
+
+        <button
+          type="button"
+          onClick={() => setZoomed(true)}
+          className="tap group relative mt-10 block max-w-md overflow-hidden rounded-lg border border-line"
+        >
+          <img
+            src="/images/size-guide-chart.jpg"
+            alt="Snug & Co. size guide chart: hoodies, sweatshirts, sweatpants and joggers measurements in inches"
+            loading="lazy"
+            className="w-full transition-transform duration-500 ease-out group-hover:scale-105"
+          />
+          <span className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-2 bg-ink/80 py-3 text-[0.8125rem] font-medium text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+            Tap to zoom
+          </span>
+        </button>
       </section>
+
+      {zoomed && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Size guide chart, full size"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/90 p-4"
+          onClick={() => setZoomed(false)}
+        >
+          <button
+            type="button"
+            onClick={() => setZoomed(false)}
+            aria-label="Close"
+            className="tap absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+          >
+            <CloseIcon aria-hidden="true" />
+          </button>
+          <img
+            src="/images/size-guide-chart.jpg"
+            alt="Snug & Co. size guide chart: hoodies, sweatshirts, sweatpants and joggers measurements in inches"
+            className="max-h-[90vh] max-w-full rounded-lg object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
 
       <section aria-labelledby="measure-title" className="mt-20 border-t border-line pt-10 lg:mt-28">
         <h2 id="measure-title" className="type-h2">
