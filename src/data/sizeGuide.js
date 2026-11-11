@@ -1,30 +1,41 @@
-// Body measurements in centimetres, one row per size. Not supplied by the business yet, so every
-// measurement is null and the page says so. Fill in `bust`, `waist` and `hips` as text (a range
-// such as '84-88' is fine); the notice goes away once every row has all three.
-// Do not estimate these: customers order to this chart.
+// Garment measurements in inches, unisex fit, one row per size. Covers hoodies, sweatshirts and
+// kaftans (relaxed fit, same block). Sweatpants/joggers use their own chart below.
 export const SIZE_CHART = [
-  { size: 'XS', bust: null, waist: null, hips: null },
-  { size: 'S', bust: null, waist: null, hips: null },
-  { size: 'M', bust: null, waist: null, hips: null },
-  { size: 'L', bust: null, waist: null, hips: null },
-  { size: 'XL', bust: null, waist: null, hips: null },
-  { size: 'XXL', bust: null, waist: null, hips: null },
+  { size: 'S', chest: '34-37', length: '26', sleeve: '23.5' },
+  { size: 'M', chest: '38-42', length: '27', sleeve: '24' },
+  { size: 'L', chest: '43-46', length: '28', sleeve: '24.5' },
+  { size: 'XL', chest: '47-50', length: '29', sleeve: '25' },
+  { size: '2XL', chest: '51-54', length: '30', sleeve: '25.5' },
+  { size: '3XL', chest: '55-56', length: '31', sleeve: '26' },
+  { size: '4XL', chest: '57-60', length: '32', sleeve: '26.5' },
+  { size: '5XL', chest: '61-64', length: '33', sleeve: '27' },
 ]
 
-export const chartIsComplete = SIZE_CHART.every((row) => row.bust && row.waist && row.hips)
+export const JOGGER_SIZE_CHART = [
+  { size: 'S', waist: '28-30', hip: '36-38', length: '40', inseam: '29' },
+  { size: 'M', waist: '31-33', hip: '39-41', length: '41', inseam: '29.5' },
+  { size: 'L', waist: '34-36', hip: '42-44', length: '42', inseam: '30' },
+  { size: 'XL', waist: '37-39', hip: '45-47', length: '43', inseam: '30.5' },
+  { size: '2XL', waist: '40-43', hip: '48-51', length: '44', inseam: '31' },
+  { size: '3XL', waist: '44-46', hip: '52-54', length: '44.5', inseam: '31' },
+  { size: '4XL', waist: '47-49', hip: '55-57', length: '45', inseam: '31.5' },
+  { size: '5XL', waist: '50-53', hip: '58-61', length: '45.5', inseam: '31.5' },
+]
+
+export const chartIsComplete = SIZE_CHART.every((row) => row.chest && row.length && row.sleeve)
 
 export const HOW_TO_MEASURE = [
   {
-    title: 'Bust',
+    title: 'Chest',
     body: 'Measure around the fullest part of your chest, keeping the tape level across your back and under your arms.',
   },
   {
-    title: 'Waist',
-    body: 'Measure around the narrowest part of your waist, usually just above your belly button. Keep the tape snug, not tight.',
+    title: 'Full length',
+    body: 'Measure from the highest point of the shoulder straight down to the hem.',
   },
   {
-    title: 'Hips',
-    body: 'Measure around the fullest part of your hips and bottom, with your feet together and the tape level all the way round.',
+    title: 'Sleeve length',
+    body: 'Measure from the shoulder seam to the cuff, following the slight bend of the arm.',
   },
 ]
 

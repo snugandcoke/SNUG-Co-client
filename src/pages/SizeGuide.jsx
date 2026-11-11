@@ -43,15 +43,15 @@ export default function SizeGuide() {
         )}
         <div className="mt-8 max-w-2xl overflow-x-auto" tabIndex={0} role="region" aria-labelledby="chart-title">
           <table className="w-full border-collapse text-left text-[0.9375rem] tabular-nums">
-            <caption className="sr-only">Body measurements in centimetres for each size</caption>
+            <caption className="sr-only">Garment measurements in inches for each size</caption>
             <thead>
               <tr className="border-b border-ink">
                 <th scope="col" className="py-3 pr-4 font-medium">
                   Size
                 </th>
-                {['Bust', 'Waist', 'Hips'].map((name) => (
+                {['Chest', 'Full length', 'Sleeve length'].map((name) => (
                   <th key={name} scope="col" className="px-4 py-3 font-medium">
-                    {name} <span className="font-normal text-stone">(cm)</span>
+                    {name} <span className="font-normal text-stone">(in)</span>
                   </th>
                 ))}
               </tr>
@@ -62,7 +62,7 @@ export default function SizeGuide() {
                   <th scope="row" className="py-3.5 pr-4 font-medium">
                     {row.size}
                   </th>
-                  {[row.bust, row.waist, row.hips].map((value, i) => (
+                  {[row.chest, row.length, row.sleeve].map((value, i) => (
                     <td key={i} className={`px-4 py-3.5 ${value ? '' : 'text-stone'}`}>
                       {value || <span aria-label="To be confirmed">–</span>}
                     </td>
