@@ -4,7 +4,7 @@ export function Wordmark({ className = '', inverse = false, decorative = false }
       src="/snug-logo.svg"
       width="685"
       height="454"
-      alt={decorative ? '' : undefined}
+      alt=""
       aria-hidden={decorative || undefined}
       className={`snug-logo h-[1em] w-auto align-middle ${inverse ? 'invert' : ''} ${className}`}
     />
