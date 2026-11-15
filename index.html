@@ -59,7 +59,19 @@
           try {
             var hero = JSON.parse(localStorage.getItem('snug-hero'))
             if (hero) preload({ as: 'image', href: hero.src, imagesrcset: hero.srcset, imagesizes: hero.sizes, fetchpriority: 'high' })
-          } catch (e) {}
+            else
+              // First visit: guess the default hero (src/lib/settings.js heroImage). Keep sizes in step with Hero.jsx HERO_SIZES.
+              preload({
+                as: 'image',
+                href: '/images/colour-block-short-set-2-800.webp',
+                imagesrcset:
+                  '/images/colour-block-short-set-2-480.webp 480w, /images/colour-block-short-set-2-800.webp 800w, /images/colour-block-short-set-2-1080.webp 1080w',
+                imagesizes: '(min-width: 1024px) 48vw, 100vw',
+                fetchpriority: 'high',
+              })
+          } catch (e) {
+            // Storage blocked: skip the head start.
+          }
         }
       })()
     </script>
