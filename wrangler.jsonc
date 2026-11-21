@@ -9,7 +9,10 @@
     "API_ORIGIN": "https://snug-co-server.onrender.com"
   },
   "observability": {
-    "enabled": false
+    "logs": {
+      "enabled": true,
+      "invocation_logs": true
+    }
   },
   "assets": {
     "directory": "./dist",
@@ -17,7 +20,11 @@
     // Page routes fall back to index.html here, so no public/_redirects catch-all is needed
     // (it fails the deploy with error 100324).
     "not_found_handling": "single-page-application",
-    // Only these paths run the Worker first; everything else is served straight from the assets.
-    "run_worker_first": ["/api/*", "/uploads/*", "/share/*", "/sitemap.xml", "/product/*", "/shop/*", "/collections/*"]
+    // Every page runs the Worker first (/api, /uploads, /share, /sitemap.xml, /product, /shop, /collections
+    // are proxied or share-routed there), so it can also add X-Robots-Tag to
+    // HTML on workers.dev / onrender.com hostnames. /assets, /images and the root files in dist/ are
+    // served straight from the assets. A "!" rule wins over a positive one, so never negate a pattern
+    // that also covers a proxied path (/sitemap.xml, /uploads/*.webp).
+    "run_worker_first": ["/*", "!/assets/*", "!/images/*", "!/robots.txt", "!/favicon.png", "!/apple-touch-icon.png", "!/og-default.jpg", "!/snug-logo.svg", "!/googled93ea16b0f6a8180.html"]
   }
 }
